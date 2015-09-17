@@ -1,0 +1,82 @@
+create table yi18_disease(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_symptom(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_check(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_surgery(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_lore(
+    id int not null,
+    title text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_ask(
+    id int not null,
+    title text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_book(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_drug(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_food(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_cook(
+    id int not null,
+    name text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_news(
+    id int not null,
+    title text not null,
+    content longtext not null,
+    primary key (id)
+) character set = utf8;
+
+create table yi18_exception(
+    item text not null,
+    id int not null,
+    info text not null
+) character set = utf8;
