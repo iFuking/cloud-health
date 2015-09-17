@@ -1,2 +1,2 @@
 # pyProject
-python project working space
+python project workspace
