@@ -1,2 +1,0 @@
-# pyProject
-python project workspace
