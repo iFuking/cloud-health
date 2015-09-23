@@ -17,14 +17,14 @@ EMPTY_FILE_NUM = 100
 req_id = 0
 missed = 0
 
-log_path = '/home/dick/filter/disease/0_log.txt'
+log_path = '/home/dick/filter/symptom/0_log.txt'
 f_log = open(log_path, 'w')
 
 while True:
     if missed > EMPTY_FILE_NUM:
         break
     req_id += 1
-    read_path = '/home/dick/yi18/disease/%d.txt' % req_id
+    read_path = '/home/dick/yi18/symptom/%d.txt' % req_id
     try:
         f = open(read_path, 'r')
     except IOError as e:
@@ -40,13 +40,12 @@ while True:
     parse_content(dct)
     content = ''
     for key in dct_filter.keys():
-        if isinstance(dct_filter[key], int) or isinstance(dct_filter[key], bool):
-            dct_filter[key] = str(dct_filter[key])
-        content += str(dct_filter[key].encode('utf8'))
+        if isinstance(dct_filter[key], int) is False and isinstance(dct_filter[key], bool) is False:
+            content += str(dct_filter[key].encode('utf8'))
 
     soup = BeautifulSoup(content)
     content = soup.getText().encode('utf8')
-    write_path = '/home/dick/filter/disease/%d.txt' % req_id
+    write_path = '/home/dick/filter/symptom/%d.txt' % req_id
     f = open(write_path, 'w')
     f.write(content)
     f.close()

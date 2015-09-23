@@ -3,28 +3,18 @@ from bs4 import BeautifulSoup
 import jieba
 import jieba.analyse
 
-
-def parse_content(d):
-    for k in d.keys():
-        if isinstance(d[k], dict):
-            parse_content(d[k])
-        else:
-            dct_filter[k] = d[k]
-    return
-
-
 EMPTY_FILE_NUM = 100
 req_id = 0
 missed = 0
 
-log_path = '/home/dick/filter/disease/0_log.txt'
+log_path = '/home/dick/filter/lore/0_log.txt'
 f_log = open(log_path, 'w')
 
 while True:
     if missed > EMPTY_FILE_NUM:
         break
     req_id += 1
-    read_path = '/home/dick/yi18/disease/%d.txt' % req_id
+    read_path = '/home/dick/yi18/lore/%d.txt' % req_id
     try:
         f = open(read_path, 'r')
     except IOError as e:
@@ -36,17 +26,13 @@ while True:
     data = f.read()
     f.close()
     dct = json.loads(data)
-    dct_filter = {}
-    parse_content(dct)
     content = ''
-    for key in dct_filter.keys():
-        if isinstance(dct_filter[key], int) or isinstance(dct_filter[key], bool):
-            dct_filter[key] = str(dct_filter[key])
-        content += str(dct_filter[key].encode('utf8'))
+    if 'message' in dct['yi18']:
+        content = dct['yi18']['message']
 
     soup = BeautifulSoup(content)
     content = soup.getText().encode('utf8')
-    write_path = '/home/dick/filter/disease/%d.txt' % req_id
+    write_path = '/home/dick/filter/lore/%d.txt' % req_id
     f = open(write_path, 'w')
     f.write(content)
     f.close()
