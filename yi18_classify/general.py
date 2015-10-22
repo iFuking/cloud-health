@@ -2,8 +2,8 @@
 
 using_item = ['disease', 'lore', 'news', 'symptom']
 
-KEY_WORD = ['血压', '肥胖', '脊椎', '消化']
-DIRECTORY = ['bp', 'fat', 'back', 'digestion']
+KEY_WORD = ['血压', '肥胖', '感冒', '脊椎', '消化', '泌尿']
+DIRECTORY = ['bp', 'fat', 'cold', 'back', 'digest', 'pee']
 
 
 for item in using_item:
