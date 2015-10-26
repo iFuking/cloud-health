@@ -27,7 +27,10 @@ while True:
         dct = json.loads(content)
         req_id = dct['yi18']['id']
         name = dct['yi18']['name']
-        menu = dct['yi18']['menu']
+        if 'menu' in dct['yi18']:
+            menu = dct['yi18']['menu']
+        else:
+            menu = ''
 
         SQL = 'INSERT INTO food(id, name, menu, content) VALUES(%s, %s, %s, %s)'
         cursor.execute(SQL, (req_id, name, menu, content))

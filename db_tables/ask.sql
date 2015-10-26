@@ -1,0 +1,7 @@
+CREATE TABLE `ask` (
+	`id` INT(11) UNSIGNED NOT NULL, 
+	`title` TEXT DEFAULT NULL, 
+	`classname` TEXT DEFAULT NULL, 
+	`content` LONGTEXT DEFAULT NULL, 
+	PRIMARY KEY (`id`)
+) CHARACTER SET = 'UTF8';

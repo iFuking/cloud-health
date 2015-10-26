@@ -13,7 +13,7 @@ class WallpaperPipeline(object):
 	def process_item(self, item, spider):
 		conn = MySQLdb.connect(host="localhost", user="root", passwd="123456", db="demo")
 		curs = conn.cursor()
-		conn.set_character_set('utf8')
+		conn.set_character_set('utf8')  # declare necessary. 
 		curs.execute('SET NAMES utf8;')
 		curs.execute('SET CHARACTER SET utf8;')
 		curs.execute('SET character_set_connection=utf8;')

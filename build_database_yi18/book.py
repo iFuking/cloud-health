@@ -26,10 +26,11 @@ while True:
         empty_resp = 0
         dct = json.loads(content)
         req_id = dct['yi18']['id']
+        book_class = dct['yi18']['bookclass']
         name = dct['yi18']['name']
 
-        SQL = 'INSERT INTO book(id, name, content) VALUES(%s, %s, %s)'
-        cursor.execute(SQL, (req_id, name, content))
+        SQL = 'INSERT INTO book(id, name, bookclass, content) VALUES(%s, %s, %s, %s)'
+        cursor.execute(SQL, (req_id, name, book_class, content))
         db.commit()
         logging.info('Write ' + file_name + ' in database.')
 

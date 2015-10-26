@@ -1,0 +1,7 @@
+CREATE TABLE `book` (
+	`id` INT(11) UNSIGNED NOT NULL, 
+	`name` TEXT DEFAULT NULL, 
+	`bookclass` TEXT DEFAULT NULL, 
+	`content` LONGTEXT DEFAULT NULL, 
+	PRIMARY KEY (`id`)
+) CHARACTER SET = 'UTF8';
