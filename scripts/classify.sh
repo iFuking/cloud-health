@@ -1,6 +1,7 @@
 #!/bin/bash
 
-cd /home/dick/classify/
+CLASSIFY_PATH='home/dick/classify/'
+cd ${CLASSIFY_PATH}
 rm -r *
 
 for class in bp fat cold back digest pee
@@ -14,5 +15,6 @@ do
 		cd ..
 done
 
-cd /home/dick/PycharmProjects/pyProject/yi18_classify/
+RUN_PATH='/home/dick/PycharmProjects/pyProject/yi18_classify/'
+cd ${RUN_PATH}
 python drug.py && python general.py

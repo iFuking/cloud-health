@@ -6,7 +6,6 @@ db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
-MIN_RESP_CONTENT_LENGTH = 81
 EMPTY_RESP_NUM = 100
 
 api_item = [
