@@ -2,6 +2,7 @@ CREATE TABLE `disease` (
 	`id` INT(11) UNSIGNED NOT NULL, 
 	`name` TEXT DEFAULT NULL, 
 	`department` TEXT DEFAULT NULL, 
-	`content` LONGTEXT DEFAULT NULL, 
+	`keywords` TEXT DEFAULT NULL, 
+	`weight` TEXT DEFAULT NULL, 
 	PRIMARY KEY (`id`)
 ) CHARACTER SET = 'UTF8';

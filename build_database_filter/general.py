@@ -29,7 +29,7 @@ name = [
     'name', 'title', 'title', 'name', 'name'
 ]
 class_name = [
-    'classname', 'bookclass', 'menu', 'department', 'category'
+    'classname', 'bookclass', 'menu', 'department', 'category',
     'menu', 'classname', 'tag', 'department', 'place'
 ]
 
@@ -50,6 +50,17 @@ def json_value(d):
     return
 
 
+ignore_key = ['img', 'author', 'time']
+
+
+# ignore some specify keys
+def ignore_tag(tag):
+    for k in ignore_key:
+        if k == tag:
+            return False
+    return True
+
+
 # main function & algorithm logic, build table one by one
 i = -1
 for table in table_name:
@@ -68,7 +79,7 @@ for table in table_name:
         for key in dct_value.keys():
             # only unicode(string) included, int/long/bool.. ignored
             # filter the second time
-            if isinstance(dct_value[key], unicode):
+            if ignore_tag(key) and isinstance(dct_value[key], unicode):
                 content += dct_value[key]
 
         soup = BeautifulSoup(content)
