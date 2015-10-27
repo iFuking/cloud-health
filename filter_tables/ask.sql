@@ -3,6 +3,6 @@ CREATE TABLE `ask` (
 	`title` TEXT DEFAULT NULL, 
 	`classname` TEXT DEFAULT NULL, 
 	`keywords` TEXT DEFAULT NULL,
-	`weight` TEXT DEFAULT NULL, 
+	`weight` TEXT DEFAULT NULL,
 	PRIMARY KEY (`id`)
 ) CHARACTER SET = 'UTF8';

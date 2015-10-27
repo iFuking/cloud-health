@@ -4,21 +4,30 @@ from bs4 import BeautifulSoup
 import jieba
 import jieba.analyse
 
+# yi18 database & its cursor, encoding: utf8
 db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
+
+# filter database & its cursor, encoding: utf8
+db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+cur_filter = db_filter.cursor()
+db_filter.set_character_set('utf8')
+
+# database tables
+table_name = [
+    'ask', 'book', 'checks', 'disease', 'drug',
+    'food', 'lore', 'news', 'surgery', 'symptom'
+]
 
 SQL = 'SELECT * FROM ask'
 cursor.execute(SQL)
 results = cursor.fetchall()
 
-db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
-cur_filter = db_filter.cursor()
-db_filter.set_character_set('utf8')
-
 dct_value = {}
 
 
+# parse json format function, key-value
 def json_value(d):
     for k in d.keys():
         if isinstance(d[k], dict):
@@ -29,6 +38,7 @@ def json_value(d):
         else:
             dct_value[k] = d[k]
     return
+
 
 for record in results:
 

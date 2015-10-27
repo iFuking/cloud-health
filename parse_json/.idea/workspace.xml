@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="62a4c36e-4a61-4407-abd7-5d6ffbb0d327" name="Default" comment="" />
+    <list default="true" id="62a4c36e-4a61-4407-abd7-5d6ffbb0d327" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../build_database_filter/ask.py" afterPath="$PROJECT_DIR$/../build_database_filter/ask.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../filter_tables/ask.sql" afterPath="$PROJECT_DIR$/../filter_tables/ask.sql" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../filter_tables/book.sql" afterPath="$PROJECT_DIR$/../filter_tables/book.sql" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../filter_tables/check.sql" afterPath="$PROJECT_DIR$/../filter_tables/check.sql" />
+    </list>
     <ignored path="parse_json.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -51,9 +56,9 @@
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="65" />
-    <option name="y" value="24" />
+    <option name="y" value="-4" />
     <option name="width" value="1855" />
-    <option name="height" value="1056" />
+    <option name="height" value="1084" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <OptionsSetting value="true" id="Add" />
@@ -103,7 +108,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="FullScreen" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../yi18_classify" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="tests" factoryName="py.test">
@@ -244,7 +249,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
+    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -289,6 +294,16 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/json_parse.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="777">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/json_parse.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="777">
