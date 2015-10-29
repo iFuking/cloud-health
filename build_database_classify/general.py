@@ -11,10 +11,10 @@ db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
-# filter database & its cursor, encoding: utf8
-db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
-cur_filter = db_filter.cursor()
-db_filter.set_character_set('utf8')
+# classify database & its cursor, encoding: utf8
+db_classify = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
+cur_classify = db_classify.cursor()
+db_classify.set_character_set('utf8')
 
 logging.basicConfig(level=logging.INFO)
 
@@ -103,13 +103,13 @@ for table in table_name:
 
         try:
             SQL = 'INSERT INTO %s_cache(id, content) ' % table + 'VALUES(%s, %s)'
-            cur_filter.execute(SQL, (record[0], content))
-            db_filter.commit()
+            cur_classify.execute(SQL, (record[0], content))
+            db_classify.commit()
 
             SQL = 'INSERT INTO %s(id, %s, %s, keywords, weight) ' % (table, name[i], class_name[i]) + \
                   'VALUES(%s, %s, %s, %s, %s)'
-            cur_filter.execute(SQL, (record[0], record[1], record[2], keywords, weight))
-            db_filter.commit()
+            cur_classify.execute(SQL, (record[0], record[1], record[2], keywords, weight))
+            db_classify.commit()
 
             logging.info(time.strftime('%Y/%m/%d %H:%M:%S--') + 'Table %s with id=%s finished.' % (table, record[0]))
 
