@@ -33,30 +33,34 @@ KEY_WORDS = [
 ]
 
 
-# execute only once
-# for name in DISEASE_NAME:
-#     try:
-#         SQL = 'INSERT INTO disease_info(name) VALUES(%s)'
-#         cur_classify.execute(SQL, name)
-#         db_classify.commit()
-#     except MySQLdb.IntegrityError as e:
-#         continue
+def main():
+    # execute only once
+    for name in DISEASE_NAME:
+        try:
+            sql = 'INSERT INTO disease_info(name) VALUES(%s)'
+            cur_classify.execute(sql, name)
+            db_classify.commit()
+        except MySQLdb.IntegrityError as e:
+            continue
+
+    for name in DISEASE_NAME:
+        i = -1
+        for table in TABLE_NAME:
+            i += 1
+            # fetch disease_name-like keywords
+            sql = 'SELECT id FROM %s WHERE %s ' % (table, KEY_WORDS[i]) \
+                  + 'LIKE %s'
+            cur_filter.execute(sql, '%'+name+'%')
+            results = cur_filter.fetchall()
+
+            col = ''
+            for res in results:
+                col += str(res[0])+','
+            # update column according to disease name
+            sql = 'UPDATE disease_info SET %s=' % table + '%s WHERE name=%s'
+            cur_classify.execute(sql, (col, name))
+            db_classify.commit()
 
 
-for name in DISEASE_NAME:
-    i = -1
-    for table in TABLE_NAME:
-        i += 1
-        # fetch disease_name-like keywords
-        SQL = 'SELECT id FROM %s WHERE %s ' % (table, KEY_WORDS[i]) \
-              + 'LIKE %s'
-        cur_filter.execute(SQL, '%'+name+'%')
-        results = cur_filter.fetchall()
-
-        col = ''
-        for res in results:
-            col += str(res[0])+','
-        # update column according to disease name
-        SQL = 'UPDATE disease_info SET %s=' % table + '%s WHERE name=%s'
-        cur_classify.execute(SQL, (col, name))
-        db_classify.commit()
+if __name__ == '__main__':
+    main()
