@@ -112,11 +112,13 @@ def main():
                 cur_filter.execute(sql, (record[0], record[1], record[2], keywords, weight))
                 db_filter.commit()
 
-                logging.info(time.strftime('%Y/%m/%d %H:%M:%S--') + 'Table %s with id=%s finished.' %
+                logging.info(time.strftime('%Y/%m/%d %H:%M:%S--') +
+                             'Building DATABASE `filter`, TABLE `%s` with id=%s finished.' %
                              (table, record[0]))
 
             except MySQLdb.IntegrityError as e:
-                logging.error(time.strftime('%Y/%m/%d %H:%M:%S--') + 'In table `%s` with id=%s, %s.' %
+                logging.error(time.strftime('%Y/%m/%d %H:%M:%S--') +
+                              'In DATABASE `filter`, TABLE `%s` with id=%s, %s.' %
                               (table, record[0], e))
                 continue
 
