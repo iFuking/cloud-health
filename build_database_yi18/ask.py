@@ -2,6 +2,7 @@ import MySQLdb
 import logging
 import json
 
+# yi18 database & its cursor, encoding: utf8
 db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
