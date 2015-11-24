@@ -11,6 +11,11 @@ db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
+# init filter database
+cursor.execute('DROP DATABASE IF EXISTS filter')
+cursor.execute('CREATE DATABASE IF NOT EXISTS filter')
+db.commit()
+
 # classify database & its cursor, encoding: utf8
 db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
 cur_filter = db_filter.cursor()

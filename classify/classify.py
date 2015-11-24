@@ -11,6 +11,11 @@ db_classify = MySQLdb.connect(host='localhost', user='root', passwd='123456', db
 cur_classify = db_classify.cursor()
 db_classify.set_character_set('utf8')
 
+# init classify database
+cur_classify.execute('DROP DATABASE IF EXISTS classify')
+cur_classify.execute('CREATE DATABASE IF NOT EXISTS classify')
+db_classify.commit()
+
 # disease list
 DISEASE_NAME = [
     '血压', '肥胖',
