@@ -12,9 +12,9 @@ cur_classify = db_classify.cursor()
 db_classify.set_character_set('utf8')
 
 # init classify database
-cur_classify.execute('DROP DATABASE IF EXISTS classify')
-cur_classify.execute('CREATE DATABASE IF NOT EXISTS classify')
-db_classify.commit()
+# cur_classify.execute('DROP DATABASE IF EXISTS classify')
+# cur_classify.execute('CREATE DATABASE IF NOT EXISTS classify')
+# db_classify.commit()
 
 # disease list
 DISEASE_NAME = [

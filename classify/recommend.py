@@ -83,8 +83,8 @@ def main():
         complications = get_complications(disease_ids)
 
         try:
-            sql = 'INSERT INTO user_info(id, disease_id, complications) VALUES(%s, %s, %s)'
-            cursor.execute(sql, (uuid, disease_ids, complications))
+            sql = 'INSERT INTO user_info(open_id, disease_id, complications) VALUES(%s, %s, %s)'
+            cursor.execute(sql, (open_id, disease_ids, complications))
             db.commit()
         except MySQLdb.IntegrityError as e:
             continue
