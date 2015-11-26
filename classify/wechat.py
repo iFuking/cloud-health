@@ -5,6 +5,7 @@ import json
 import logging
 import requests
 import MySQLdb
+from wechat_sdk import WechatBasic
 
 # ignore ssl InsecurePlatform warning
 requests.packages.urllib3.disable_warnings()
@@ -12,12 +13,13 @@ requests.packages.urllib3.disable_warnings()
 # configure logging level
 logging.basicConfig(level=logging.INFO)
 
+# app_id & app_secret, generate access_token
+app_id = 'wx1071ef65b25ab039'
+app_secret = '235aaa4ed220afbf47af54939bebcff3'
+
 
 # wechat dev api, get access token
 def get_access_token():
-    # app_id & app_secret, generate access_token
-    app_id = 'wx1071ef65b25ab039'
-    app_secret = '235aaa4ed220afbf47af54939bebcff3'
     # access token item
     item = 'access_token'
 
@@ -54,19 +56,19 @@ logging.info('Access_token: %s' % access_token)
 
 
 # wechat dev api, move user to the specific group
-# def move_user(open_id, group_id):
-#     move_user_api = 'https://api.weixin.qq.com/cgi-bin/groups/members/update?access_token=%s' % access_token
-#     # POST data format(json) & data example
-#     data = {'openid': open_id, 'to_groupid': group_id}
-#     # POST request, json format
-#     response = requests.post(move_user_api, json.dumps(data))
-#     dct = json.loads(response.text)
-#     # check POST response message
-#     if 'errcode' in dct and dct['errcode'] == 0:
-#         logging.info('Move user `%s` to group %d successfully!' % (open_id, group_id))
-#     else:
-#         logging.warning('Failed to move user `%s` to group %d.' % (open_id, group_id))
-#     return
+def move_user(open_id, group_id):
+    move_user_api = 'https://api.weixin.qq.com/cgi-bin/groups/members/update?access_token=%s' % access_token
+    # POST data format(json) & data example
+    data = {'openid': open_id, 'to_groupid': group_id}
+    # POST request, json format
+    response = requests.post(move_user_api, json.dumps(data))
+    dct = json.loads(response.text)
+    # check POST response message
+    if 'errcode' in dct and dct['errcode'] == 0:
+        logging.info('Move user `%s` to group %d successfully!' % (open_id, group_id))
+    else:
+        logging.warning('Failed to move user `%s` to group %d.' % (open_id, group_id))
+    return
 
 
 # wechat dev api, get all users' open_id
@@ -156,6 +158,12 @@ def init_group():
     return
 
 
+# cloudtest database & its cursor, encoding: utf8
+db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
+cursor = db.cursor()
+db.set_character_set('utf8')
+
+
 # wechat dev api, create a group
 def create_group(group_name):
     create_group_api = 'https://api.weixin.qq.com/cgi-bin/groups/create?access_token=%s' % access_token
@@ -168,6 +176,20 @@ def create_group(group_name):
         logging.info('Create group `%s` successfully!' % group_name)
     else:
         logging.info('Failed to create group `%s`.' % group_name)
+    return
+
+
+# create groups according to
+# database `classify`, table `user_info`, columns `disease_id`
+def create_groups():
+    # mysql operation, get records group by disease_id
+    sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
+    cursor.execute(sql)
+    results = cursor.fetchall()
+
+    # create each group
+    for record in results:
+        create_group(record[0])
     return
 
 
@@ -187,26 +209,6 @@ def move_user_list(open_id_list, group_id):
     return
 
 
-# cloudtest database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
-cursor = db.cursor()
-db.set_character_set('utf8')
-
-
-# create groups according to
-# database `classify`, table `user_info`, columns `disease_id`
-def create_groups():
-    # mysql operation, get records group by disease_id
-    sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
-    cursor.execute(sql)
-    results = cursor.fetchall()
-
-    # create each group
-    for record in results:
-        create_group(record[0])
-    return
-
-
 # move each user to specific group
 def move_users():
     # get non_system group (id > 2)
@@ -219,6 +221,8 @@ def move_users():
             cursor.execute(sql, group['name'])
             # users' open_id list in the same group
             results = cursor.fetchall()
+            # for record in results:
+            #     move_user(record[0], group['id'])
             open_id_list = []
             for record in results:
                 open_id_list.append(record[0])
@@ -234,12 +238,26 @@ def grouping():
     return
 
 
+# WechatBasic sdk
+def get_media_id():
+    # create wechat basic instance, param: app_id & app_secret
+    wechat_basic_ins = WechatBasic(appid=app_id, appsecret=app_secret)
+    # WechatBasic python sdk
+    response = wechat_basic_ins.upload_media('image', open('./img.jpg', 'r'))
+    media_id = ''
+    if media_id in response:
+        media_id = response['media_id']
+    return media_id
+
+
 def send_msg():
+    media_id = 'cWmZ17UuNi_LlPdqRF3K-B1LWjjrfLW_bKJhWVnc_6Rwd7JGi8onDOSB4iwWcpN7'
+
     return
 
 
 def main():
-    grouping()
+    # grouping()
     send_msg()
     return
 
