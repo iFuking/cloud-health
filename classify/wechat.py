@@ -1,11 +1,14 @@
 __author__ = 'dick'
+from wechat_sdk import WechatBasic
 import urllib2
 import socket
 import json
 import logging
 import requests
 import MySQLdb
-from wechat_sdk import WechatBasic
+import os
+import time
+
 
 # ignore ssl InsecurePlatform warning
 requests.packages.urllib3.disable_warnings()
@@ -16,15 +19,12 @@ logging.basicConfig(level=logging.INFO)
 # app_id & app_secret, generate access_token
 app_id = 'wx1071ef65b25ab039'
 app_secret = '235aaa4ed220afbf47af54939bebcff3'
+wechat_basic_ins = WechatBasic(appid=app_id, appsecret=app_secret)
 
 
-# wechat dev api, get access token
+# get access token, server api
 def get_access_token():
-    # access token item
-    item = 'access_token'
-
-    # wechat access token api usage
-    access_token_api = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % \
+    access_token_api = 'http://172.18.9.7/api/data/wechat-token/appId=%s&secret=%s' % \
                        (app_id, app_secret)
     # GET request
     request = urllib2.Request(access_token_api)
@@ -40,18 +40,80 @@ def get_access_token():
 
     # json format response return
     dct = json.loads(content)
-    if item in dct:
+    if 'data' in dct and 'token' in dct['data']:
+        access_token_path = '../request_param/access_token'
+        # write access token into file
+        write_file = open(access_token_path, 'w')
+        write_file.write(dct['data']['token'])
+        write_file.close()
+
         logging.info('GET access token successfully!')
-        return dct[item]
+        return dct['data']['token']
     else:
         logging.warning('Failed to GET access token.')
         return ''
+    return
+
+
+# wechat dev api, get access token
+# def get_access_token():
+#     # access token item
+#     item = 'access_token'
+#
+#     # wechat access token api usage
+#     access_token_api = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % \
+#                        (app_id, app_secret)
+#     # GET request
+#     request = urllib2.Request(access_token_api)
+#     try:
+#         response = urllib2.urlopen(request, timeout=1)
+#         # response, json format access token if status=200
+#         # else response error
+#         content = response.read()
+#
+#     # catch exception, not found host or connection timeout
+#     except (urllib2.URLError, socket.timeout) as e:
+#         logging.error(e)
+#
+#     # json format response return
+#     dct = json.loads(content)
+#     if item in dct:
+#         logging.info('GET access token successfully!')
+#         return dct[item]
+#     else:
+#         logging.warning('Failed to GET access token.')
+#         return ''
+
+
+# get access token, ensure access token valid
+# def get_access_token():
+#     access_token_path = './access_token'
+#     # store access token in file
+#     if not os.path.exists(access_token_path):
+#         write_file = open(access_token_path, 'w')
+#         write_file.write('null\n-1\n')
+#         write_file.close()
+#
+#     # read access token file
+#     read_file = open(access_token_path)
+#     token = read_file.readline()
+#     # last 7200 seconds since GET request to wechat server
+#     expire_time = read_file.readline()
+#
+#     # update access token if expired
+#     current_time = int(time.time())
+#     if expire_time == '' or current_time > int(expire_time)-100:
+#         response = wechat_basic_ins.get_access_token()
+#         token = response['access_token']
+#         expire_time = response['access_token_expires_at']
+#         write_file = open(access_token_path, 'w')
+#         write_file.write(token+'\n'+str(expire_time)+'\n')
+#         write_file.close()
+#     return token
 
 
 # global variable, get access token
-# access_token = get_access_token()
-access_token = 'p8fqGPiafgOvUD8m5XmbD6S9_5NFwIzVOasN9dzEAXJeJEKC1sL1nF_C-P3AEir_7Ly2fc_JieyqhWWCibJos2W9AXxmaW1G0' + \
-               'herMOT5cowHBVcAFAUOI'
+access_token = get_access_token()
 logging.info('Access_token: %s' % access_token)
 
 
@@ -221,13 +283,16 @@ def move_users():
             cursor.execute(sql, group['name'])
             # users' open_id list in the same group
             results = cursor.fetchall()
-            # for record in results:
-            #     move_user(record[0], group['id'])
-            open_id_list = []
+
             for record in results:
-                open_id_list.append(record[0])
-            # move bunches of users
-            move_user_list(open_id_list, group['id'])
+                wechat_basic_ins.move_user(record[0], group['id'])
+            break
+
+            # open_id_list = []
+            # for record in results:
+            #     open_id_list.append(record[0])
+            # # move bunches of users
+            # move_user_list(open_id_list, group['id'])
     return
 
 
@@ -251,8 +316,21 @@ def get_media_id():
 
 
 def send_msg():
-    media_id = 'cWmZ17UuNi_LlPdqRF3K-B1LWjjrfLW_bKJhWVnc_6Rwd7JGi8onDOSB4iwWcpN7'
-
+    media_id = 'wJKVhrJp0-qfiHn-1f8K09m0yLL2DzFOMb0BSm4LlC-wfXS4Szu_ZTX7osSPTmlI'
+    open_id_list = [
+        'o8AvqvsA4EPC6HkAfIz-lQOJUl-0',
+        'o8AvqvmmE20ISJslNhaB2oxYHxxg'
+    ]
+    send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
+    data = {
+        'touser': open_id_list,
+        'mpnews': {
+            'media_id': media_id
+        },
+        'msgtype': 'mpnews'
+    }
+    response = requests.post(send_msg_api, json.dumps(data))
+    logging.info(response.text)
     return
 
 
