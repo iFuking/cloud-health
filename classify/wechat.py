@@ -1,4 +1,4 @@
-__author__ = 'dick'
+# encoding: utf-8
 from wechat_sdk import WechatBasic
 import urllib2
 import socket
@@ -8,6 +8,7 @@ import requests
 import MySQLdb
 import os
 import time
+import random
 
 
 # ignore ssl InsecurePlatform warning
@@ -22,37 +23,55 @@ app_secret = '235aaa4ed220afbf47af54939bebcff3'
 wechat_basic_ins = WechatBasic(appid=app_id, appsecret=app_secret)
 
 
-# get access token, server api
-def get_access_token():
-    access_token_api = 'http://172.18.9.7/api/data/wechat-token/appId=%s&secret=%s' % \
-                       (app_id, app_secret)
+# check access token validity
+def check_token_validity(token):
+    wechat_server_api = 'https://api.weixin.qq.com/cgi-bin/getcallbackip?access_token=%s' % token
     # GET request
-    request = urllib2.Request(access_token_api)
+    request = urllib2.Request(wechat_server_api)
     try:
         response = urllib2.urlopen(request, timeout=1)
-        # response, json format access token if status=200
-        # else response error
         content = response.read()
-
-    # catch exception, not found host or connection timeout
     except (urllib2.URLError, socket.timeout) as e:
         logging.error(e)
 
-    # json format response return
     dct = json.loads(content)
-    if 'data' in dct and 'token' in dct['data']:
-        access_token_path = '../request_param/access_token'
-        # write access token into file
-        write_file = open(access_token_path, 'w')
-        write_file.write(dct['data']['token'])
-        write_file.close()
+    if 'ip_list' in dct:
+        logging.info('Valid access token.')
+        return True
+    logging.info('Invalid access token.')
+    return False
 
-        logging.info('GET access token successfully!')
-        return dct['data']['token']
-    else:
-        logging.warning('Failed to GET access token.')
-        return ''
-    return
+
+# get access token, server api
+def get_access_token():
+    refresh = 'false'
+    while True:
+        access_token_api = 'http://172.18.9.7/api/data/wechat-token?appId=%s&secret=%s&refresh=%s' % \
+                           (app_id, app_secret, refresh)
+        # GET request
+        request = urllib2.Request(access_token_api)
+        try:
+            response = urllib2.urlopen(request, timeout=1)
+            # response, json format access token if status=200
+            # else response error
+            content = response.read()
+
+        # catch exception, not found host or connection timeout
+        except (urllib2.URLError, socket.timeout) as e:
+            logging.error(e)
+
+        # json format response return
+        dct = json.loads(content)
+        if 'data' in dct and 'token' in dct['data']:
+            token = dct['data']['token']
+
+        # check the validity of access token
+        if check_token_validity(token) is True:
+            break
+        else:
+            refresh = 'true'
+    logging.info('Access_token: %s' % token)
+    return token
 
 
 # wechat dev api, get access token
@@ -78,10 +97,10 @@ def get_access_token():
 #     # json format response return
 #     dct = json.loads(content)
 #     if item in dct:
-#         logging.info('GET access token successfully!')
+#         logging.info('Get access token successfully!')
 #         return dct[item]
 #     else:
-#         logging.warning('Failed to GET access token.')
+#         logging.warning('Failed to get access token.')
 #         return ''
 
 
@@ -114,7 +133,6 @@ def get_access_token():
 
 # global variable, get access token
 access_token = get_access_token()
-logging.info('Access_token: %s' % access_token)
 
 
 # wechat dev api, move user to the specific group
@@ -153,7 +171,7 @@ def move_user(open_id, group_id):
 #     if 'data' in dct and 'openid' in dct['data']:
 #         # get user open_id list
 #         user_list = dct['data']['openid']
-#         logging.info('GET user list successfully!')
+#         logging.info('Get user list successfully!')
 #     return user_list
 
 
@@ -177,7 +195,7 @@ def get_group_list():
     if 'groups' in dct:
         # get group (id, name, count) list
         group_list = dct['groups']
-        logging.info('GET group list successfully!')
+        logging.info('Get group list successfully!')
     return group_list
 
 
@@ -303,34 +321,257 @@ def grouping():
     return
 
 
-# WechatBasic sdk
-def get_media_id():
-    # create wechat basic instance, param: app_id & app_secret
-    wechat_basic_ins = WechatBasic(appid=app_id, appsecret=app_secret)
-    # WechatBasic python sdk
-    response = wechat_basic_ins.upload_media('image', open('./img.jpg', 'r'))
-    media_id = ''
-    if media_id in response:
-        media_id = response['media_id']
+# recommend system, items included
+RECOMMEND_ITEM = [
+    'ask', 'book', 'checks', 'disease', 'drug',
+    'food', 'lore', 'news', 'surgery', 'symptom'
+]
+# in different tables, column title differ
+TITLE = [
+    'title', 'name', 'name', 'name', 'name',
+    'name', 'title', 'title', 'name', 'name'
+]
+
+
+# WechatBasic sdk, upload media & get media_id
+# save valid media_id in file, update when expired
+def get_media_id(item):
+    # media_id file path
+    file_path = '../request_param/media_id/%s' % item
+    if not os.path.exists(file_path):
+        # create file
+        write_file = open(file_path, 'w')
+        write_file.close()
+
+    # read media_id file
+    read_file = open(file_path, 'r')
+    # media_id & expire time (lasting three days, 3*24*3600 seconds)
+    media_id = read_file.readline()
+    expire_time = read_file.readline()
+
+    # update media_id if expired or expire_time invalid
+    current_time = int(time.time())
+    if expire_time == '' or current_time > int(expire_time)-3600:
+        img_path = '../image/%s.jpg' % item
+        # WechatBasic python sdk
+        response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
+        # response text, log for debug
+        logging.info(response)
+        if 'media_id' in response:
+            # generate media_id & expire time
+            media_id = response['media_id']
+            expire_time = response['created_at']+3*24*3600
+            logging.info('Update media_id and expire time.')
+            # write file
+            write_file = open(file_path, 'w')
+            write_file.write(media_id+'\n'+str(expire_time)+'\n')
+            write_file.close()
+            logging.info('Save media_id and expire time in file %s' % file_path)
+    logging.info('Media_id: %s' % media_id)
     return media_id
 
 
-def send_msg():
-    media_id = 'wJKVhrJp0-qfiHn-1f8K09m0yLL2DzFOMb0BSm4LlC-wfXS4Szu_ZTX7osSPTmlI'
-    open_id_list = [
-        'o8AvqvsA4EPC6HkAfIz-lQOJUl-0',
-        'o8AvqvmmE20ISJslNhaB2oxYHxxg'
-    ]
-    send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
-    data = {
-        'touser': open_id_list,
-        'mpnews': {
-            'media_id': media_id
-        },
-        'msgtype': 'mpnews'
-    }
-    response = requests.post(send_msg_api, json.dumps(data))
+def get_recommend_content():
+
+    return
+
+
+# filter database & its cursor, encoding: utf8
+db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+cursor_filter = db_filter.cursor()
+db_filter.set_character_set('utf8')
+
+# digest len
+DIGEST_LENGTH = 67
+
+
+# wechat dev api, get article_id
+# def get_article_id(item_index, item_id):
+#     # article_id file path
+#     file_path = '../request_param/article_id/%s' % RECOMMEND_ITEM[item_index]
+#     if not os.path.exists(file_path):
+#         # create file
+#         write_file = open(file_path, 'w')
+#         write_file.close()
+#
+#     # read article_id file
+#     read_file = open(file_path, 'r')
+#     # article_id & expire time (lasting three days, 3*24*3600 seconds)
+#     article_id = read_file.readline()
+#     expire_time = read_file.readline()
+#
+#     # update media_id if expired or expire_time invalid
+#     current_time = int(time.time())
+#     if expire_time == '' or current_time > int(expire_time)-3600:
+#         # get media_id
+#         # media_id = get_media_id(RECOMMEND_ITEM[item_index])
+#         media_id = 'debug'
+#
+#         # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
+#         sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE id=%s'
+#         cursor_filter.execute(sql, item_id)
+#         res = cursor_filter.fetchall()
+#         # fetch result as title
+#         title = res[0][0]
+#
+#         # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
+#         sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+'_cache WHERE id=%s'
+#         cursor_filter.execute(sql, item_id)
+#         res = cursor_filter.fetchall()
+#         # fetch result as content
+#         content = res[0][0]
+#
+#         # get digest, simplify content
+#         digest = ''
+#         if len(content) > DIGEST_LENGTH:
+#             digest = content[:DIGEST_LENGTH]
+#
+#         article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
+#         # POST data format(json) & data example
+#         data = """{
+#             "articles": [
+#                 {
+#                     "thumb_media_id": "%s",
+#                     "author": "chmwang",
+#                     "title": "%s",
+#                     "content_source_url": "www.jtang.cn",
+#                     "content": "%s",
+#                     "digest": "%s",
+#                     "show_cover_pic": "1"
+#                 }
+#             ]
+#         }""" % (media_id, title, content, digest)
+#         print data
+#         # POST request, json format `str`
+#         response = requests.post(article_id_api, data)
+#         # response text, log for debug
+#         logging.info(response.text)
+#         dct = json.loads(response.text)
+#         if 'media_id' in dct:
+#             # generate article_id & expire time
+#             article_id = dct['media_id']
+#             expire_time = dct['created_at']+3*24*3600
+#             logging.info('Update article_id and expire time.')
+#             # write file
+#             write_file = open(file_path, 'w')
+#             write_file.write(media_id+'\n'+str(expire_time)+'\n')
+#             write_file.close()
+#             logging.info('Save article_id and expire time in file %s' % file_path)
+#     logging.info('Article_id: %s' % article_id)
+#     return article_id
+
+def get_article_id(item_index, item_id):
+    # get media_id
+    media_id = str(get_media_id(RECOMMEND_ITEM[item_index]))
+    # media_id = 'YrZBy4tLVHmVd32SstiYN_R4aCtOxYVVR2kVJJiide8m-vjNceDcxl6r_7Fy2Tzz'
+    # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
+    sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE id=%s'
+    cursor_filter.execute(sql, item_id)
+    res = cursor_filter.fetchall()
+    # fetch result as title
+    title = res[0][0]
+
+    # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
+    sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+'_cache WHERE id=%s'
+    cursor_filter.execute(sql, item_id)
+    res = cursor_filter.fetchall()
+    # fetch result as content
+    content = res[0][0]
+
+    # get digest, simplify content
+    digest = title
+
+    article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
+    # POST data format(json) & data example
+    data = """{
+        "articles": [
+            {
+                "thumb_media_id": "%s",
+                "author": "chmwang",
+                "title": "%s",
+                "content_source_url": "www.jtang.cn",
+                "content": "%s",
+                "digest": "%s",
+                "show_cover_pic": "1"
+            }
+        ]
+    }""" % (media_id, title, content, digest)
+    # POST request, json format `str`
+    response = requests.post(article_id_api, data)
+    # response text, log for debug
     logging.info(response.text)
+    dct = json.loads(response.text)
+    article_id = ''
+    if 'media_id' in dct:
+        # generate article_id
+        article_id = dct['media_id']
+    logging.info('Article_id: %s' % article_id)
+    return article_id
+
+
+# send message to users
+# query database, grouping users according to disease
+# wechat dev api, send message using open_id list
+def send_msg():
+    # group users by disease_id
+    sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
+    cursor.execute(sql)
+    results = cursor.fetchall()
+
+    for record in results:
+        # for each group, generate open_id list
+        sql = 'SELECT open_id, complications FROM user_info WHERE disease_id=%s'
+        cursor.execute(sql, record[0])
+        res = cursor.fetchall()
+        open_id_list = []
+        for r in res:
+            open_id_list.append(r[0])
+        # nickname: chmwang, append to each group
+        open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
+
+        # candidate disease list
+        disease_id_list = record[0]+res[0][1]
+        # parse disease_id to type list & remove the last element
+        disease_id_list = disease_id_list.split(',')
+        disease_id_list.pop()
+
+        # randomly decide which disease to recommend
+        disease_id = disease_id_list[random.randint(0, len(disease_id_list)-1)]
+
+        # iterate until disease_info_column not null
+        while True:
+            # randomly decide which column to choose in table `disease_info`
+            recommend_item_index = random.randint(0, len(RECOMMEND_ITEM)-1)
+
+            # fetch such disease_info column with specific disease_id
+            # return list of related results, for example, book results(id=1, 2, ..)
+            sql = 'SELECT '+RECOMMEND_ITEM[recommend_item_index]+' FROM disease_info WHERE id=%s'
+            cursor.execute(sql, disease_id)
+            r = cursor.fetchall()
+            if len(r[0][0]) > 0:
+                break
+
+        # related result list
+        item_id_list = r[0][0].split(',')
+        item_id_list.pop()
+        # choose only one in these results
+        item_id = item_id_list[random.randint(0, len(item_id_list)-1)]
+
+        # get article_id
+        article_id = get_article_id(recommend_item_index, item_id)
+
+        send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
+        data = {
+            'touser': open_id_list,
+            'mpnews': {
+                'media_id': article_id
+            },
+            'msgtype': 'mpnews'
+        }
+        # POST request, json format
+        response = requests.post(send_msg_api, json.dumps(data))
+        # response text, log for debug
+        logging.info(response.text)
     return
 
 
@@ -340,5 +581,5 @@ def main():
     return
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
