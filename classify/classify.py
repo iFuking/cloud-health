@@ -2,19 +2,14 @@
 import MySQLdb
 
 # filter database & its cursor, encoding: utf8
-db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+db_filter = MySQLdb.connect(host='localhost', user='web', passwd='web', db='filter')
 cur_filter = db_filter.cursor()
 db_filter.set_character_set('utf8')
 
 # classify database & its cursor, encoding: utf8
-db_classify = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
+db_classify = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
 cur_classify = db_classify.cursor()
 db_classify.set_character_set('utf8')
-
-# init classify database
-# cur_classify.execute('DROP DATABASE IF EXISTS classify')
-# cur_classify.execute('CREATE DATABASE IF NOT EXISTS classify')
-# db_classify.commit()
 
 # disease list
 DISEASE_NAME = [

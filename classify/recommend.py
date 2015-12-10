@@ -4,7 +4,7 @@ import socket
 import json
 
 # cloudtest database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='cloudtest')
+db = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cloudtest')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
@@ -14,7 +14,7 @@ cursor.execute(SQL)
 results = cursor.fetchall()
 
 # classify database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
+db = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
 cursor = db.cursor()
 db.set_character_set('utf8')
 

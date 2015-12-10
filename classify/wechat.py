@@ -6,8 +6,6 @@ import json
 import logging
 import requests
 import MySQLdb
-import os
-import time
 import random
 
 
@@ -239,7 +237,7 @@ def init_group():
 
 
 # cloudtest database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
+db = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
@@ -336,48 +334,54 @@ TITLE = [
 # WechatBasic sdk, upload media & get media_id
 # save valid media_id in file, update when expired
 def get_media_id(item):
-    # media_id file path
-    file_path = '../request_param/media_id/%s' % item
-    if not os.path.exists(file_path):
-        # create file
-        write_file = open(file_path, 'w')
-        write_file.close()
-
-    # read media_id file
-    read_file = open(file_path, 'r')
-    # media_id & expire time (lasting three days, 3*24*3600 seconds)
-    media_id = read_file.readline()
-    expire_time = read_file.readline()
-
-    # update media_id if expired or expire_time invalid
-    current_time = int(time.time())
-    if expire_time == '' or current_time > int(expire_time)-3600:
-        img_path = '../image/%s.jpg' % item
-        # WechatBasic python sdk
-        response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
-        # response text, log for debug
-        logging.info(response)
-        if 'media_id' in response:
-            # generate media_id & expire time
-            media_id = response['media_id']
-            expire_time = response['created_at']+3*24*3600
-            logging.info('Update media_id and expire time.')
-            # write file
-            write_file = open(file_path, 'w')
-            write_file.write(media_id+'\n'+str(expire_time)+'\n')
-            write_file.close()
-            logging.info('Save media_id and expire time in file %s' % file_path)
+    img_path = '../image/%s.jpg' % item
+    # WechatBasic python sdk
+    response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
+    # response text, log for debug
+    logging.info(response)
+    if 'media_id' in response:
+        media_id = response['media_id']
     logging.info('Media_id: %s' % media_id)
     return media_id
 
-
-def get_recommend_content():
-
-    return
+# def get_media_id(item):
+#     # media_id file path
+#     file_path = '../request_param/media_id/%s' % item
+#     if not os.path.exists(file_path):
+#         # create file
+#         write_file = open(file_path, 'w')
+#         write_file.close()
+#
+#     # read media_id file
+#     read_file = open(file_path, 'r')
+#     # media_id & expire time (lasting three days, 3*24*3600 seconds)
+#     media_id = read_file.readline()
+#     expire_time = read_file.readline()
+#
+#     # update media_id if expired or expire_time invalid
+#     current_time = int(time.time())
+#     if expire_time == '' or current_time > int(expire_time)-3600:
+#         img_path = '../image/%s.jpg' % item
+#         # WechatBasic python sdk
+#         response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
+#         # response text, log for debug
+#         logging.info(response)
+#         if 'media_id' in response:
+#             # generate media_id & expire time
+#             media_id = response['media_id']
+#             expire_time = response['created_at']+3*24*3600
+#             logging.info('Update media_id and expire time.')
+#             # write file
+#             write_file = open(file_path, 'w')
+#             write_file.write(media_id+'\n'+str(expire_time)+'\n')
+#             write_file.close()
+#             logging.info('Save media_id and expire time in file %s' % file_path)
+#     logging.info('Media_id: %s' % media_id)
+#     return media_id
 
 
 # filter database & its cursor, encoding: utf8
-db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+db_filter = MySQLdb.connect(host='localhost', user='web', passwd='web', db='filter')
 cursor_filter = db_filter.cursor()
 db_filter.set_character_set('utf8')
 
@@ -562,7 +566,7 @@ def send_msg():
 
         send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
         data = {
-            'touser': open_id_list,
+            'touser': ['o8AvqvsA4EPC6HkAfIz-lQOJUl-0', 'o8AvqvsA4EPC6HkAfIz-lQOJUl-0'],
             'mpnews': {
                 'media_id': article_id
             },

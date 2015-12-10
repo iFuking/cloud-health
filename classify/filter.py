@@ -7,37 +7,35 @@ import logging
 import time
 
 # yi18 database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='yi18')
+db = MySQLdb.connect(host='localhost', user='web', passwd='web', db='yi18')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
-# init filter database
-# cursor.execute('DROP DATABASE IF EXISTS filter')
-# cursor.execute('CREATE DATABASE IF NOT EXISTS filter')
-# db.commit()
-
-# classify database & its cursor, encoding: utf8
-db_filter = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+# filter database & its cursor, encoding: utf8
+db_filter = MySQLdb.connect(host='localhost', user='web', passwd='web', db='filter')
 cur_filter = db_filter.cursor()
 db_filter.set_character_set('utf8')
 
 logging.basicConfig(level=logging.INFO)
 
 # database tables
-table_name = [
-    'ask', 'book', 'checks', 'disease', 'drug',
-    'food', 'lore', 'news', 'surgery', 'symptom'
-]
+# table_name = [
+#     'ask', 'book', 'checks', 'disease', 'drug',
+#     'food', 'lore', 'news', 'surgery', 'symptom'
+# ]
+table_name = ['lore']
 
 # in different tables, column name differ
-name = [
-    'title', 'name', 'name', 'name', 'name',
-    'name', 'title', 'title', 'name', 'name'
-]
-class_name = [
-    'classname', 'bookclass', 'menu', 'department', 'category',
-    'menu', 'classname', 'tag', 'department', 'place'
-]
+# name = [
+#     'title', 'name', 'name', 'name', 'name',
+#     'name', 'title', 'title', 'name', 'name'
+# ]
+# class_name = [
+#     'classname', 'bookclass', 'menu', 'department', 'category',
+#     'menu', 'classname', 'tag', 'department', 'place'
+# ]
+name = ['title']
+class_name = ['classname']
 dct_value = {}
 
 
@@ -97,7 +95,8 @@ def main():
             soup = BeautifulSoup(content)
             # beautiful soup get text (tag filter) & newline filter
             # filter the third time
-            content = soup.getText().replace('\n', '').replace('\r', '').replace('\t', '')
+            # content = soup.getText().replace('\n', '').replace('\r', '').replace('\t', '')
+            content = soup.getText()
 
             # jieba extract tags, return top5 key words & its weight
             tags = jieba.analyse.extract_tags(content, 5, True)
