@@ -19,23 +19,20 @@ db_filter.set_character_set('utf8')
 logging.basicConfig(level=logging.INFO)
 
 # database tables
-# table_name = [
-#     'ask', 'book', 'checks', 'disease', 'drug',
-#     'food', 'lore', 'news', 'surgery', 'symptom'
-# ]
-table_name = ['lore']
+table_name = [
+    'ask', 'book', 'checks', 'disease', 'drug',
+    'food', 'lore', 'news', 'surgery', 'symptom'
+]
 
 # in different tables, column name differ
-# name = [
-#     'title', 'name', 'name', 'name', 'name',
-#     'name', 'title', 'title', 'name', 'name'
-# ]
-# class_name = [
-#     'classname', 'bookclass', 'menu', 'department', 'category',
-#     'menu', 'classname', 'tag', 'department', 'place'
-# ]
-name = ['title']
-class_name = ['classname']
+name = [
+    'title', 'name', 'name', 'name', 'name',
+    'name', 'title', 'title', 'name', 'name'
+]
+class_name = [
+    'classname', 'bookclass', 'menu', 'department', 'category',
+    'menu', 'classname', 'tag', 'department', 'place'
+]
 dct_value = {}
 
 
