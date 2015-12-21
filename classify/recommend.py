@@ -87,6 +87,7 @@ def main():
             cursor.execute(sql, (open_id, disease_ids, complications))
             db.commit()
         except MySQLdb.IntegrityError as e:
+            print e
             continue
 
 

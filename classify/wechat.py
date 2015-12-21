@@ -31,12 +31,15 @@ def check_token_validity(token):
         content = response.read()
     except (urllib2.URLError, socket.timeout) as e:
         logging.error(e)
+        print e
 
     dct = json.loads(content)
     if 'ip_list' in dct:
         logging.info('Valid access token.')
+        print 'Valid access token.'
         return True
     logging.info('Invalid access token.')
+    print 'Invalid access token.'
     return False
 
 
@@ -57,6 +60,7 @@ def get_access_token():
         # catch exception, not found host or connection timeout
         except (urllib2.URLError, socket.timeout) as e:
             logging.error(e)
+            print e
 
         # json format response return
         dct = json.loads(content)
@@ -69,6 +73,7 @@ def get_access_token():
         else:
             refresh = 'true'
     logging.info('Access_token: %s' % token)
+    print 'Access_token: %s' % token
     return token
 
 
@@ -236,12 +241,6 @@ def init_group():
     return
 
 
-# cloudtest database & its cursor, encoding: utf8
-db = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
-cursor = db.cursor()
-db.set_character_set('utf8')
-
-
 # wechat dev api, create a group
 def create_group(group_name):
     create_group_api = 'https://api.weixin.qq.com/cgi-bin/groups/create?access_token=%s' % access_token
@@ -262,8 +261,8 @@ def create_group(group_name):
 def create_groups():
     # mysql operation, get records group by disease_id
     sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
-    cursor.execute(sql)
-    results = cursor.fetchall()
+    cursor_classify.execute(sql)
+    results = cursor_classify.fetchall()
 
     # create each group
     for record in results:
@@ -296,9 +295,9 @@ def move_users():
     for group in group_list:
         if group['id'] > 2:
             sql = 'SELECT open_id FROM user_info where disease_id=%s'
-            cursor.execute(sql, group['name'])
+            cursor_classify.execute(sql, group['name'])
             # users' open_id list in the same group
-            results = cursor.fetchall()
+            results = cursor_classify.fetchall()
 
             for record in results:
                 wechat_basic_ins.move_user(record[0], group['id'])
@@ -333,15 +332,16 @@ TITLE = [
 
 # WechatBasic sdk, upload media & get media_id
 # save valid media_id in file, update when expired
-def get_media_id(item):
-    img_path = '../image/%s.jpg' % item
+def get_media_id(img_path):
     # WechatBasic python sdk
     response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
     # response text, log for debug
     logging.info(response)
+    print response
     if 'media_id' in response:
         media_id = response['media_id']
     logging.info('Media_id: %s' % media_id)
+    print 'Media_id: %s' % media_id
     return media_id
 
 # def get_media_id(item):
@@ -384,9 +384,6 @@ def get_media_id(item):
 db_filter = MySQLdb.connect(host='localhost', user='web', passwd='web', db='filter')
 cursor_filter = db_filter.cursor()
 db_filter.set_character_set('utf8')
-
-# digest len
-DIGEST_LENGTH = 67
 
 
 # wechat dev api, get article_id
@@ -464,9 +461,31 @@ DIGEST_LENGTH = 67
 #     logging.info('Article_id: %s' % article_id)
 #     return article_id
 
+
+def get_article_resp(media_id, title, source_url, content, digest):
+    article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
+    # POST data format(json) & data example
+    data = """{
+        "articles": [
+            {
+                "thumb_media_id": "%s",
+                "author": "cloud-health",
+                "title": "%s",
+                "content_source_url": "%s",
+                "content": "%s",
+                "digest": "%s",
+                "show_cover_pic": "1"
+            }
+        ]
+    }""" % (media_id, title, source_url, content, digest)
+    # POST request, json format `str`
+    response = requests.post(article_id_api, data)
+    return response
+
+
 def get_article_id(item_index, item_id):
     # get media_id
-    media_id = str(get_media_id(RECOMMEND_ITEM[item_index]))
+    media_id = str(get_media_id('../image/%s.jpg' % RECOMMEND_ITEM[item_index]))
     # media_id = 'YrZBy4tLVHmVd32SstiYN_R4aCtOxYVVR2kVJJiide8m-vjNceDcxl6r_7Fy2Tzz'
     # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
     sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE id=%s'
@@ -485,32 +504,25 @@ def get_article_id(item_index, item_id):
     # get digest, simplify content
     digest = title
 
-    article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
-    # POST data format(json) & data example
-    data = """{
-        "articles": [
-            {
-                "thumb_media_id": "%s",
-                "author": "chmwang",
-                "title": "%s",
-                "content_source_url": "www.jtang.cn",
-                "content": "%s",
-                "digest": "%s",
-                "show_cover_pic": "1"
-            }
-        ]
-    }""" % (media_id, title, content, digest)
     # POST request, json format `str`
-    response = requests.post(article_id_api, data)
+    response = get_article_resp(media_id, title, 'www.jtang.cn', content, digest)
     # response text, log for debug
     logging.info(response.text)
+    print response.text
     dct = json.loads(response.text)
     article_id = ''
     if 'media_id' in dct:
         # generate article_id
         article_id = dct['media_id']
     logging.info('Article_id: %s' % article_id)
+    print 'Article_id: %s' % article_id
     return article_id
+
+
+# cloudtest database & its cursor, encoding: utf8
+db_classify = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
+cursor_classify = db_classify.cursor()
+db_classify.set_character_set('utf8')
 
 
 # send message to users
@@ -519,14 +531,14 @@ def get_article_id(item_index, item_id):
 def send_msg():
     # group users by disease_id
     sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
-    cursor.execute(sql)
-    results = cursor.fetchall()
+    cursor_classify.execute(sql)
+    results = cursor_classify.fetchall()
 
     for record in results:
         # for each group, generate open_id list
         sql = 'SELECT open_id, complications FROM user_info WHERE disease_id=%s'
-        cursor.execute(sql, record[0])
-        res = cursor.fetchall()
+        cursor_classify.execute(sql, record[0])
+        res = cursor_classify.fetchall()
         open_id_list = []
         for r in res:
             open_id_list.append(r[0])
@@ -550,8 +562,8 @@ def send_msg():
             # fetch such disease_info column with specific disease_id
             # return list of related results, for example, book results(id=1, 2, ..)
             sql = 'SELECT '+RECOMMEND_ITEM[recommend_item_index]+' FROM disease_info WHERE id=%s'
-            cursor.execute(sql, disease_id)
-            r = cursor.fetchall()
+            cursor_classify.execute(sql, disease_id)
+            r = cursor_classify.fetchall()
             if len(r[0][0]) > 0:
                 break
 
@@ -566,7 +578,7 @@ def send_msg():
 
         send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
         data = {
-            'touser': ['o8AvqvsA4EPC6HkAfIz-lQOJUl-0', 'o8AvqvsA4EPC6HkAfIz-lQOJUl-0'],
+            'touser': open_id_list,
             'mpnews': {
                 'media_id': article_id
             },
@@ -575,13 +587,69 @@ def send_msg():
         # POST request, json format
         response = requests.post(send_msg_api, json.dumps(data))
         # response text, log for debug
-        logging.info(response.text)
+        logging.info(response.text + '\n\n')
+        print response.text
+    return
+
+
+# cloudtest database & its cursor, encoding: utf8
+db_cloudtest = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cloudtest')
+cursor_cloudtest = db_cloudtest.cursor()
+db_cloudtest.set_character_set('utf8')
+
+
+def send_apk():
+    cursor_cloudtest.execute('SELECT open_id FROM user')
+    results = cursor_cloudtest.fetchall()
+    open_id_list = []
+    for res in results:
+        open_id_list.append(res[0])
+
+    cursor_classify.execute('SELECT COUNT(*) FROM apk')
+    results = cursor_classify.fetchall()
+    apk_numbers = results[0][0]
+    apk_id = random.randint(0, apk_numbers % 100)
+
+    sql = 'SELECT * FROM apk WHERE id=%s'
+    cursor_classify.execute(sql, apk_id)
+    results = cursor_classify.fetchall()
+    title = results[0][1]
+    source_url = results[0][5]
+    content = results[0][6]
+    digest = title
+
+    media_id = get_media_id('../image/apk_img/%d.jpg' % apk_id)
+    response = get_article_resp(media_id, title, source_url, content, digest)
+    print response.text
+    dct = json.loads(response.text)
+    article_id = ''
+    if 'media_id' in dct:
+        # generate article_id
+        article_id = dct['media_id']
+    logging.info('Article_id: %s' % article_id)
+    print 'Article_id: %s' % article_id
+
+    send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
+    data = {
+        'touser': open_id_list,
+        'mpnews': {
+            'media_id': article_id
+        },
+        'msgtype': 'mpnews'
+    }
+    # POST request, json format
+    response = requests.post(send_msg_api, json.dumps(data))
+    # response text, log for debug
+    logging.info(response.text + '\n\n')
+    print response.text
+
     return
 
 
 def main():
     # grouping()
     send_msg()
+    send_apk()
     return
 
 
