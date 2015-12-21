@@ -23,6 +23,7 @@ table_name = [
     'ask', 'book', 'checks', 'disease', 'drug',
     'food', 'lore', 'news', 'surgery', 'symptom'
 ]
+# table_name = ['book']
 
 # in different tables, column name differ
 name = [
@@ -33,29 +34,32 @@ class_name = [
     'classname', 'bookclass', 'menu', 'department', 'category',
     'menu', 'classname', 'tag', 'department', 'place'
 ]
+# name = ['name']
+# class_name = ['bookclass']
 dct_value = {}
 
 
 # parse json format function, key-value
 def json_value(dct):
     for key in dct.keys():
-        # type(d[k]) is also dict, call function recursively
-        if isinstance(dct[key], dict):
-            json_value(dct[key])
-        # type(d[k]) is list, parse each node
-        elif isinstance(dct[key], list):
-            for it in dct[key]:
-                json_value(it)
-        # until key-value structure, save it
-        else:
-            dct_value[key] = dct[key]
+        if ignore_tag(key):
+            # type(d[k]) is also dict, call function recursively
+            if isinstance(dct[key], dict):
+                json_value(dct[key])
+            # type(d[k]) is list, parse each node
+            elif isinstance(dct[key], list):
+                for it in dct[key]:
+                    json_value(it)
+            # until key-value structure, save it
+            else:
+                dct_value[key] = dct[key]
     return
 
 
 ignore_key = [
     'img', 'from', 'author', 'count',
     'image', 'ANumber', 'PType', 'factory',
-    'time'
+    'time', 'list'
 ]
 
 
@@ -65,6 +69,18 @@ def ignore_tag(tag):
         if k == tag:
             return False
     return True
+
+
+def chr_replace(content):
+    content_tmp = ''
+    for i in range(0, len(content)):
+        if ord(content[i]) == 12288:
+            continue
+        elif i > 0 and ord(content[i]) == ord('\n') and ord(content[i]) == ord(content[i-1]):
+            continue
+        content_tmp += content[i]
+    content = content_tmp.replace('\r', '').replace('\t', '').replace(' ', '')
+    return content
 
 
 def main():
@@ -81,19 +97,21 @@ def main():
         for record in results:
             # call json_value() function, parse json(content) & save pair<key, value>
             # filter the first time
+            dct_value.clear()
             json_value(json.loads(record[3]))
+
             content = ''
             for key in dct_value.keys():
                 # only unicode(string) included, int/long/bool.. ignored
                 # filter the second time
-                if ignore_tag(key) and isinstance(dct_value[key], unicode):
+                if isinstance(dct_value[key], unicode):
                     content += dct_value[key]
 
             soup = BeautifulSoup(content)
             # beautiful soup get text (tag filter) & newline filter
             # filter the third time
             # content = soup.getText().replace('\n', '').replace('\r', '').replace('\t', '')
-            content = soup.getText()
+            content = chr_replace(soup.getText())
 
             # jieba extract tags, return top5 key words & its weight
             tags = jieba.analyse.extract_tags(content, 5, True)
