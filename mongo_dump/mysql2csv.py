@@ -1,9 +1,8 @@
 # encoding: utf-8
 import MySQLdb
-import json
 
 
-db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='filter')
+db = MySQLdb.connect(host='localhost', user='root', passwd='123456', db='classify')
 cursor = db.cursor()
 db.set_character_set('utf8')
 
