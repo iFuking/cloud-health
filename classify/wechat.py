@@ -162,6 +162,10 @@ def get_article_resp(media_id, title, source_url, content, digest):
     }""" % (media_id, title, source_url, content, digest)
     # POST request, json format `str`
     response = requests.post(article_id_api, data)
+
+    # response text, log for debug
+    logging.info(response.text)
+    print response.text
     return response
 
 
@@ -174,6 +178,7 @@ def get_article_id(item_index, item_id):
     res = cursor_filter.fetchall()
     # fetch result as title
     title = res[0][0]
+    print 'Title: ' + title
 
     # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
     sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+'_cache WHERE id=%s'
@@ -187,9 +192,7 @@ def get_article_id(item_index, item_id):
 
     # POST request, json format `str`
     response = get_article_resp(media_id, title, 'www.jtang.cn', content, digest)
-    # response text, log for debug
-    logging.info(response.text)
-    print response.text
+
     dct = json.loads(response.text)
     article_id = ''
     if 'media_id' in dct:
@@ -226,7 +229,7 @@ def send_msg():
         # nickname: chmwang, append to each group
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
         open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
-        print open_id_list
+        print 'Open_id_list: ' + str(open_id_list)
 
         # candidate disease list
         disease_id_list = record[0]+res[0][1]
@@ -236,6 +239,10 @@ def send_msg():
 
         # randomly decide which disease to recommend
         disease_id = disease_id_list[random.randint(0, len(disease_id_list)-1)]
+        sql = 'SELECT name FROM disease_info WHERE id=%s'
+        cursor_classify.execute(sql, disease_id)
+        disease_name = cursor_classify.fetchall()
+        print 'Disease_name: ' + disease_name[0][0]
 
         # iterate until disease_info_column not null
         while True:
@@ -255,6 +262,8 @@ def send_msg():
         item_id_list.pop()
         # choose only one in these results
         item_id = item_id_list[random.randint(0, len(item_id_list)-1)]
+        print 'Item: ' + RECOMMEND_ITEM[recommend_item_index]
+        print 'Item_id: ' + item_id
 
         # get article_id
         article_id = get_article_id(recommend_item_index, item_id)
@@ -270,8 +279,8 @@ def send_msg():
         # POST request, json format
         response = requests.post(send_msg_api, json.dumps(data))
         # response text, log for debug
-        logging.info(response.text + '\n\n')
-        print response.text
+        logging.info(response.text)
+        print response.text + '\n\n'
     return
 
 
@@ -287,6 +296,9 @@ def send_apk():
     open_id_list = []
     for res in results:
         open_id_list.append(res[0])
+    open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
+    open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
+    print 'Open_id_list: ' + str(open_id_list)
 
     cursor_classify.execute('SELECT COUNT(*) FROM apk')
     results = cursor_classify.fetchall()
@@ -297,6 +309,8 @@ def send_apk():
     cursor_classify.execute(sql, apk_id)
     results = cursor_classify.fetchall()
     title = results[0][1]
+    print 'Title: ' + title
+
     source_url = results[0][5]
     content = results[0][6]
     digest = title
@@ -323,8 +337,8 @@ def send_apk():
     # POST request, json format
     response = requests.post(send_msg_api, json.dumps(data))
     # response text, log for debug
-    logging.info(response.text + '\n\n')
-    print response.text
+    logging.info(response.text)
+    print response.text + '\n\n'
 
     return
 
