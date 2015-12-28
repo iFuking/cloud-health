@@ -31,11 +31,11 @@ def get_soup_by_url(url):
         logging.info("request url %s: %s", "success" if success else "fail", url)
 
 
-def sync_db(app_id, name, star, down_num, img_url, apk_url, description):
+def sync_db(app_id, name, star, down_num, web_url, img_url, apk_url, description):
     try:
-        sql = 'INSERT INTO apk(id, name, star, down_num, img_url, apk_url, description) ' \
-              'VALUES(%s, %s, %s, %s, %s, %s, %s)'
-        cursor.execute(sql, (app_id, name, star, down_num, img_url, apk_url, description))
+        sql = 'INSERT INTO apk(id, name, star, down_num, web_url, img_url, apk_url, description) ' \
+              'VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
+        cursor.execute(sql, (app_id, name, star, down_num, web_url, img_url, apk_url, description))
         db.commit()
     except Exception, e:
         logging.info(e)
@@ -71,7 +71,8 @@ def get_360_info(url):
             apk_url = app.find('div', class_='download comdown').find_all('a')[0].get('href')
 
             detailed_url = app.find_all('a')[0].get('href').encode('utf8')
-            req = urllib2.Request(''.join(['http://zhushou.360.cn', detailed_url]))
+            web_url = ''.join(['http://zhushou.360.cn', detailed_url])
+            req = urllib2.Request(web_url)
             web_page = urllib2.urlopen(req)
             s = BeautifulSoup(web_page.read(), 'lxml')
             # s = get_soup_by_url(''.join(['http://zhushou.360.cn', detailed_url]))
@@ -80,7 +81,7 @@ def get_360_info(url):
             # content = content.replace('\r', ' ').replace('\t', '').replace(' ', '')
             content = chr_replace(content)
 
-            sync_db(app_id, app_name, app_star, download_numbers, img_url, apk_url, content)
+            sync_db(app_id, app_name, app_star, download_numbers, web_url, img_url, apk_url, content)
             logging.info('App name: %s' % app_name)
     return
 
