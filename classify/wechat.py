@@ -77,37 +77,6 @@ def get_access_token():
     return token
 
 
-# def _get_access_token():
-#     # app_id & app_secret, generate access_token
-#
-#     # access token item
-#     item = 'access_token'
-#
-#     # wechat access token api usage
-#     access_token_api = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % \
-#                        (app_id, app_secret)
-#     # GET request
-#     request = urllib2.Request(access_token_api)
-#     try:
-#         response = urllib2.urlopen(request, timeout=1)
-#         # response, json format access token if status=200
-#         # else response error
-#         content = response.read()
-#
-#     # catch exception, not found host or connection timeout
-#     except (urllib2.URLError, socket.timeout) as e:
-#         logging.error(e)
-#
-#     # json format response return
-#     dct = json.loads(content)
-#     if item in dct:
-#         logging.info('GET access token successfully!')
-#         return dct[item]
-#     else:
-#         logging.warning('Failed to GET access token.')
-#         return ''
-
-
 access_token = get_access_token()
 
 
@@ -147,21 +116,21 @@ db_filter.set_character_set('utf8')
 def get_article_resp(media_id, title, source_url, content, digest):
     article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
     # POST data format(json) & data example
-    data = """{
-        "articles": [
+    data = {
+        'articles': [
             {
-                "thumb_media_id": "%s",
-                "author": "cloud-health",
-                "title": "%s",
-                "content_source_url": "%s",
-                "content": "%s",
-                "digest": "%s",
-                "show_cover_pic": "1"
+                'thumb_media_id': media_id,
+                'author': 'cloud-health',
+                'title': title,
+                'content_source_url': source_url,
+                'content': content,
+                'digest': digest,
+                'show_cover_pic': 1
             }
         ]
-    }""" % (media_id, title, source_url, content, digest)
+    }
     # POST request, json format `str`
-    response = requests.post(article_id_api, data)
+    response = requests.post(article_id_api, json.dumps(data, ensure_ascii=False))
 
     # response text, log for debug
     logging.info(response.text)
@@ -179,6 +148,7 @@ def get_article_id(item_index, item_id):
     # fetch result as title
     title = res[0][0]
     print 'Title: ' + title
+    logging.info('Title: ' + title)
 
     # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
     sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+'_cache WHERE id=%s'
@@ -230,6 +200,7 @@ def send_msg():
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
         open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
         print 'Open_id_list: ' + str(open_id_list)
+        logging.info('Open_id_list: ' + str(open_id_list))
 
         # candidate disease list
         disease_id_list = record[0]+res[0][1]
@@ -243,6 +214,7 @@ def send_msg():
         cursor_classify.execute(sql, disease_id)
         disease_name = cursor_classify.fetchall()
         print 'Disease_name: ' + disease_name[0][0]
+        logging.info('Disease_name: ' + disease_name[0][0])
 
         # iterate until disease_info_column not null
         while True:
@@ -264,6 +236,8 @@ def send_msg():
         item_id = item_id_list[random.randint(0, len(item_id_list)-1)]
         print 'Item: ' + RECOMMEND_ITEM[recommend_item_index]
         print 'Item_id: ' + item_id
+        logging.info('Item: ' + RECOMMEND_ITEM[recommend_item_index])
+        logging.info('Item_id: ' + item_id)
 
         # get article_id
         article_id = get_article_id(recommend_item_index, item_id)
@@ -299,25 +273,30 @@ def send_apk():
     open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
     open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
     print 'Open_id_list: ' + str(open_id_list)
+    logging.info('Open_id_list: ' + str(open_id_list))
 
     cursor_classify.execute('SELECT COUNT(*) FROM apk')
     results = cursor_classify.fetchall()
-    apk_numbers = results[0][0]
-    apk_id = random.randint(0, apk_numbers % 100)
+    apk_numbers = results[0][0] / 10
+    apk_id = random.randint(0, apk_numbers)
+    print 'Apk_id: ' + str(apk_id)
+    logging.info('Apk_id: ' + str(apk_id))
 
     sql = 'SELECT * FROM apk WHERE id=%s'
     cursor_classify.execute(sql, apk_id)
     results = cursor_classify.fetchall()
     title = results[0][1]
     print 'Title: ' + title
+    logging.info('Title: ' + title)
 
-    source_url = results[0][5]
-    content = results[0][6]
+    source_url = results[0][4]
+    content = results[0][7]
+    content = content.replace('\n', '<br>')
     digest = title
 
     media_id = str(get_media_id('../image/apk_img/%d.jpg' % apk_id))
     response = get_article_resp(media_id, title, source_url, content, digest)
-    print response.text
+
     dct = json.loads(response.text)
     article_id = ''
     if 'media_id' in dct:
@@ -344,7 +323,7 @@ def send_apk():
 
 
 def main():
-    send_msg()
+    # send_msg()
     send_apk()
     return
 
