@@ -17,7 +17,7 @@ def mysql2mongo():
     table_name = cursor.fetchall()
 
     for table in table_name:
-        collection = mongo_db[table[0]]
+        collection = mongo_db[table[0]+'s']
 
         sql = 'SHOW COLUMNS FROM %s' % table[0]
         cursor.execute(sql)
