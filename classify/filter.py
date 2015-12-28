@@ -107,14 +107,14 @@ def main():
                 if isinstance(dct_value[key], unicode):
                     content += dct_value[key]
 
+            # print content
             soup = BeautifulSoup(content)
             # beautiful soup get text (tag filter) & newline filter
             # filter the third time
-            # content = soup.getText().replace('\n', '').replace('\r', '').replace('\t', '')
-            content = chr_replace(soup.getText())
+            content_text = chr_replace(soup.getText())
 
             # jieba extract tags, return top5 key words & its weight
-            tags = jieba.analyse.extract_tags(content, 5, True)
+            tags = jieba.analyse.extract_tags(content_text, 5, True)
             keywords = weight = ''
             # words and weight separated by ','
             for word, w in tags:
