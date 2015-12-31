@@ -142,7 +142,7 @@ def get_article_id(item_index, item_id):
     # get media_id
     media_id = str(get_media_id('../image/%s.jpg' % RECOMMEND_ITEM[item_index]))
     # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
-    sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE id=%s'
+    sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE '+RECOMMEND_ITEM[item_index]+'_id=%s'
     cursor_filter.execute(sql, item_id)
     res = cursor_filter.fetchall()
     # fetch result as title
@@ -151,7 +151,7 @@ def get_article_id(item_index, item_id):
     logging.info('Title: ' + title)
 
     # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
-    sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+'_cache WHERE id=%s'
+    sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+' WHERE '+RECOMMEND_ITEM[item_index]+'_id=%s'
     cursor_filter.execute(sql, item_id)
     res = cursor_filter.fetchall()
     # fetch result as content
@@ -210,7 +210,7 @@ def send_msg():
 
         # randomly decide which disease to recommend
         disease_id = disease_id_list[random.randint(0, len(disease_id_list)-1)]
-        sql = 'SELECT name FROM disease_info WHERE id=%s'
+        sql = 'SELECT name FROM disease_info WHERE disease_id=%s'
         cursor_classify.execute(sql, disease_id)
         disease_name = cursor_classify.fetchall()
         print 'Disease_name: ' + disease_name[0][0]
@@ -223,7 +223,7 @@ def send_msg():
 
             # fetch such disease_info column with specific disease_id
             # return list of related results, for example, book results(id=1, 2, ..)
-            sql = 'SELECT '+RECOMMEND_ITEM[recommend_item_index]+' FROM disease_info WHERE id=%s'
+            sql = 'SELECT '+RECOMMEND_ITEM[recommend_item_index]+' FROM disease_info WHERE disease_id=%s'
             cursor_classify.execute(sql, disease_id)
             r = cursor_classify.fetchall()
             if len(r[0][0]) > 0:
@@ -323,7 +323,7 @@ def send_apk():
 
 
 def main():
-    # send_msg()
+    send_msg()
     send_apk()
     return
 

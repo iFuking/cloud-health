@@ -1,0 +1,9 @@
+CREATE TABLE `checks` (
+	`checks_id` INT(11) UNSIGNED NOT NULL, 
+	`name` TEXT DEFAULT NULL, 
+	`menu` TEXT DEFAULT NULL, 
+	`keywords` TEXT DEFAULT NULL, 
+	`weight` TEXT DEFAULT NULL, 
+	`content` LONGTEXT DEFAULT NULL, 
+	PRIMARY KEY (`checks_id`)
+) CHARACTER SET = 'UTF8';

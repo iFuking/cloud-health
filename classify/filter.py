@@ -122,13 +122,13 @@ def main():
                 weight += (str(w)+',')
 
             try:
-                sql = 'INSERT INTO %s_cache(id, content) ' % table + 'VALUES(%s, %s)'
-                cur_filter.execute(sql, (record[0], content))
-                db_filter.commit()
+                # sql = 'INSERT INTO %s_cache(id, content) ' % table + 'VALUES(%s, %s)'
+                # cur_filter.execute(sql, (record[0], content))
+                # db_filter.commit()
 
-                sql = 'INSERT INTO %s(id, %s, %s, keywords, weight) ' % (table, name[i], class_name[i]) + \
-                      'VALUES(%s, %s, %s, %s, %s)'
-                cur_filter.execute(sql, (record[0], record[1], record[2], keywords, weight))
+                sql = 'INSERT INTO %s(%s_id, %s, %s, keywords, weight, content) ' % (table, table, name[i], class_name[i]) + \
+                      'VALUES(%s, %s, %s, %s, %s, %s)'
+                cur_filter.execute(sql, (record[0], record[1], record[2], keywords, weight, content))
                 db_filter.commit()
 
                 logging.info(time.strftime('%Y/%m/%d %H:%M:%S--') +

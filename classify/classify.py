@@ -45,10 +45,11 @@ def main():
 
     for name in DISEASE_NAME:
         i = -1
+        print 'Disease ' + name
         for table in TABLE_NAME:
             i += 1
             # fetch disease_name-like keywords
-            sql = 'SELECT id FROM %s WHERE %s ' % (table, KEY_WORDS[i]) \
+            sql = 'SELECT %s_id FROM %s WHERE %s ' % (table, table, KEY_WORDS[i]) \
                   + 'LIKE %s'
             cur_filter.execute(sql, '%'+name+'%')
             results = cur_filter.fetchall()
@@ -60,6 +61,8 @@ def main():
             sql = 'UPDATE disease_info SET %s=' % table + '%s WHERE name=%s'
             cur_classify.execute(sql, (col, name))
             db_classify.commit()
+
+            print 'Table ' + table
 
 
 if __name__ == '__main__':
