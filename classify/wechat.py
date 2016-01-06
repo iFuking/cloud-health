@@ -113,18 +113,27 @@ cursor_filter = db_filter.cursor()
 db_filter.set_character_set('utf8')
 
 
-def get_article_resp(media_id, title, source_url, content, digest):
+def get_article_resp(article_list):
     article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
     # POST data format(json) & data example
     data = {
         'articles': [
             {
-                'thumb_media_id': media_id,
+                'thumb_media_id': article_list[1]['media_id'],
                 'author': 'cloud-health',
-                'title': title,
-                'content_source_url': source_url,
-                'content': content,
-                'digest': digest,
+                'title': article_list[1]['title'],
+                'content_source_url': article_list[1]['source_url'],
+                'content': article_list[1]['content'],
+                'digest': article_list[1]['digest'],
+                'show_cover_pic': 1
+            },
+            {
+                'thumb_media_id': article_list[0]['media_id'],
+                'author': 'cloud-health',
+                'title': article_list[0]['title'],
+                'content_source_url': article_list[0]['source_url'],
+                'content': article_list[0]['content'],
+                'digest': article_list[0]['digest'],
                 'show_cover_pic': 1
             }
         ]
@@ -138,7 +147,7 @@ def get_article_resp(media_id, title, source_url, content, digest):
     return response
 
 
-def get_article_id(item_index, item_id):
+def get_article_id(item_index, item_id, article_list):
     # get media_id
     media_id = str(get_media_id('../image/%s.jpg' % RECOMMEND_ITEM[item_index]))
     # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
@@ -154,14 +163,22 @@ def get_article_id(item_index, item_id):
     sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+' WHERE '+RECOMMEND_ITEM[item_index]+'_id=%s'
     cursor_filter.execute(sql, item_id)
     res = cursor_filter.fetchall()
-    # fetch result as content
-    content = res[0][0]
 
+    disease_json = dict()
+    # fetch result as content
+    disease_json['content'] = res[0][0]
+
+    disease_json['title'] = title
     # get digest, simplify content
-    digest = title
+    disease_json['digest'] = title
+
+    disease_json['media_id'] = media_id
+    disease_json['source_url'] = 'www.jtang.cn'
+
+    article_list.append(disease_json)
 
     # POST request, json format `str`
-    response = get_article_resp(media_id, title, 'www.jtang.cn', content, digest)
+    response = get_article_resp(article_list)
 
     dct = json.loads(response.text)
     article_id = ''
@@ -179,10 +196,40 @@ cursor_classify = db_classify.cursor()
 db_classify.set_character_set('utf8')
 
 
-# send message to users
-# query database, grouping users according to disease
-# wechat dev api, send message using open_id list
-def send_msg():
+# cloudtest database & its cursor, encoding: utf8
+db_cloudtest = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cloudtest')
+cursor_cloudtest = db_cloudtest.cursor()
+db_cloudtest.set_character_set('utf8')
+
+
+def send_article():
+    # generate apk recommend article
+    cursor_classify.execute('SELECT COUNT(*) FROM apk')
+    results = cursor_classify.fetchall()
+    apk_numbers = results[0][0] / 10
+    apk_id = random.randint(0, apk_numbers)
+    print 'Apk_id: ' + str(apk_id)
+    logging.info('Apk_id: ' + str(apk_id))
+
+    sql = 'SELECT * FROM apk WHERE apk_id=%s'
+    cursor_classify.execute(sql, apk_id)
+    results = cursor_classify.fetchall()
+    title = '应用推荐： ' + results[0][1]
+    print 'Title: ' + title
+    logging.info('Title: ' + title)
+
+    apk_json = dict()
+    apk_json['title'] = title
+    apk_json['source_url'] = results[0][4]
+    content = results[0][7]
+    apk_json['content'] = content.replace('\n', '<br>')
+    apk_json['digest'] = title
+
+    apk_json['media_id'] = str(get_media_id('../image/apk_img/%d.jpg' % apk_id))
+    article_list = list()
+    article_list.append(apk_json)
+
+    # generate disease recommend article
     # group users by disease_id
     sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
     cursor_classify.execute(sql)
@@ -198,7 +245,6 @@ def send_msg():
             open_id_list.append(r[0])
         # nickname: chmwang, append to each group
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
-        open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
         print 'Open_id_list: ' + str(open_id_list)
         logging.info('Open_id_list: ' + str(open_id_list))
 
@@ -240,7 +286,7 @@ def send_msg():
         logging.info('Item_id: ' + item_id)
 
         # get article_id
-        article_id = get_article_id(recommend_item_index, item_id)
+        article_id = get_article_id(recommend_item_index, item_id, article_list)
 
         send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
         data = {
@@ -258,73 +304,8 @@ def send_msg():
     return
 
 
-# cloudtest database & its cursor, encoding: utf8
-db_cloudtest = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cloudtest')
-cursor_cloudtest = db_cloudtest.cursor()
-db_cloudtest.set_character_set('utf8')
-
-
-def send_apk():
-    cursor_cloudtest.execute('SELECT open_id FROM user')
-    results = cursor_cloudtest.fetchall()
-    open_id_list = []
-    for res in results:
-        open_id_list.append(res[0])
-    open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
-    open_id_list.append('o8AvqvmmE20ISJslNhaB2oxYHxxg')
-    print 'Open_id_list: ' + str(open_id_list)
-    logging.info('Open_id_list: ' + str(open_id_list))
-
-    cursor_classify.execute('SELECT COUNT(*) FROM apk')
-    results = cursor_classify.fetchall()
-    apk_numbers = results[0][0] / 10
-    apk_id = random.randint(0, apk_numbers)
-    print 'Apk_id: ' + str(apk_id)
-    logging.info('Apk_id: ' + str(apk_id))
-
-    sql = 'SELECT * FROM apk WHERE id=%s'
-    cursor_classify.execute(sql, apk_id)
-    results = cursor_classify.fetchall()
-    title = results[0][1]
-    print 'Title: ' + title
-    logging.info('Title: ' + title)
-
-    source_url = results[0][4]
-    content = results[0][7]
-    content = content.replace('\n', '<br>')
-    digest = title
-
-    media_id = str(get_media_id('../image/apk_img/%d.jpg' % apk_id))
-    response = get_article_resp(media_id, title, source_url, content, digest)
-
-    dct = json.loads(response.text)
-    article_id = ''
-    if 'media_id' in dct:
-        # generate article_id
-        article_id = dct['media_id']
-    logging.info('Article_id: %s' % article_id)
-    print 'Article_id: %s' % article_id
-
-    send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
-    data = {
-        'touser': open_id_list,
-        'mpnews': {
-            'media_id': article_id
-        },
-        'msgtype': 'mpnews'
-    }
-    # POST request, json format
-    response = requests.post(send_msg_api, json.dumps(data))
-    # response text, log for debug
-    logging.info(response.text)
-    print response.text + '\n\n'
-
-    return
-
-
 def main():
-    send_msg()
-    send_apk()
+    send_article()
     return
 
 
