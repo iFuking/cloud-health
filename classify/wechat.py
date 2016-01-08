@@ -1,11 +1,11 @@
 # encoding: utf-8
 from wechat_sdk import WechatBasic
+from pymongo import MongoClient
 import urllib2
 import socket
 import json
 import logging
 import requests
-import MySQLdb
 import random
 
 
@@ -19,6 +19,9 @@ logging.basicConfig(level=logging.INFO)
 app_id = 'wx1071ef65b25ab039'
 app_secret = '235aaa4ed220afbf47af54939bebcff3'
 wechat_basic_ins = WechatBasic(appid=app_id, appsecret=app_secret)
+
+client = MongoClient()
+db = client.test
 
 
 # check access token validity
@@ -107,12 +110,6 @@ def get_media_id(img_path):
     return media_id
 
 
-# filter database & its cursor, encoding: utf8
-db_filter = MySQLdb.connect(host='localhost', user='web', passwd='web', db='filter')
-cursor_filter = db_filter.cursor()
-db_filter.set_character_set('utf8')
-
-
 def get_article_resp(article_list):
     article_id_api = 'https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=%s' % access_token
     # POST data format(json) & data example
@@ -150,27 +147,21 @@ def get_article_resp(article_list):
 def get_article_id(item_index, item_id, article_list):
     # get media_id
     media_id = str(get_media_id('../image/%s.jpg' % RECOMMEND_ITEM[item_index]))
-    # get title from database `filter`, table `RECOMMEND_ITEM[item_index]`
-    sql = 'SELECT '+TITLE[item_index]+' FROM '+RECOMMEND_ITEM[item_index]+' WHERE '+RECOMMEND_ITEM[item_index]+'_id=%s'
-    cursor_filter.execute(sql, item_id)
-    res = cursor_filter.fetchall()
+
+    collection_name = 'f_'+RECOMMEND_ITEM[item_index]+'2s'
+    res = db[collection_name].find({RECOMMEND_ITEM[item_index]+'_id': item_id})
     # fetch result as title
-    title = res[0][0]
+    title = res[0][TITLE[item_index]]
     print 'Title: ' + title
     logging.info('Title: ' + title)
 
-    # get content from database `filter`, table `RECOMMEND_ITEM[item_index]_cache`
-    sql = 'SELECT content FROM '+RECOMMEND_ITEM[item_index]+' WHERE '+RECOMMEND_ITEM[item_index]+'_id=%s'
-    cursor_filter.execute(sql, item_id)
-    res = cursor_filter.fetchall()
-
     disease_json = dict()
     # fetch result as content
-    disease_json['content'] = res[0][0]
+    disease_json['content'] = res[0]['content'].encode('utf8')
 
-    disease_json['title'] = title
+    disease_json['title'] = title.encode('utf8')
     # get digest, simplify content
-    disease_json['digest'] = title
+    disease_json['digest'] = title.encode('utf8')
 
     disease_json['media_id'] = media_id
     disease_json['source_url'] = 'www.jtang.cn'
@@ -190,40 +181,26 @@ def get_article_id(item_index, item_id, article_list):
     return article_id
 
 
-# cloudtest database & its cursor, encoding: utf8
-db_classify = MySQLdb.connect(host='localhost', user='web', passwd='web', db='classify')
-cursor_classify = db_classify.cursor()
-db_classify.set_character_set('utf8')
-
-
-# cloudtest database & its cursor, encoding: utf8
-db_cloudtest = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cloudtest')
-cursor_cloudtest = db_cloudtest.cursor()
-db_cloudtest.set_character_set('utf8')
-
-
 def send_article():
     # generate apk recommend article
-    cursor_classify.execute('SELECT COUNT(*) FROM apk')
-    results = cursor_classify.fetchall()
-    apk_numbers = results[0][0] / 10
-    apk_id = random.randint(0, apk_numbers)
+    apk_numbers = db['w_apk2s'].count() / 10
+    apk_id = random.randint(1, apk_numbers)
     print 'Apk_id: ' + str(apk_id)
     logging.info('Apk_id: ' + str(apk_id))
 
-    sql = 'SELECT * FROM apk WHERE apk_id=%s'
-    cursor_classify.execute(sql, apk_id)
-    results = cursor_classify.fetchall()
-    title = '应用推荐： ' + results[0][1]
+    results = db['w_apk2s'].find({'apk_id': apk_id})
+    title = '应用推荐： '.decode('utf8') + results[0]['name']
     print 'Title: ' + title
     logging.info('Title: ' + title)
 
     apk_json = dict()
-    apk_json['title'] = title
-    apk_json['source_url'] = results[0][4]
-    content = results[0][7]
+    apk_json['title'] = title.encode('utf8')
+
+    apk_json['source_url'] = results[0]['web_url'].encode('utf8')
+    content = results[0]['description'].encode('utf8')
     apk_json['content'] = content.replace('\n', '<br>')
-    apk_json['digest'] = title
+
+    apk_json['digest'] = title.encode('utf8')
 
     apk_json['media_id'] = str(get_media_id('../image/apk_img/%d.jpg' % apk_id))
     article_list = list()
@@ -231,36 +208,35 @@ def send_article():
 
     # generate disease recommend article
     # group users by disease_id
-    sql = 'SELECT disease_id FROM user_info GROUP BY disease_id'
-    cursor_classify.execute(sql)
-    results = cursor_classify.fetchall()
+    results = db['w_user_info2s'].aggregate([{'$group': {'_id': '$disease_id'}}])
 
     for record in results:
         # for each group, generate open_id list
-        sql = 'SELECT open_id, complications FROM user_info WHERE disease_id=%s'
-        cursor_classify.execute(sql, record[0])
-        res = cursor_classify.fetchall()
-        open_id_list = []
+        res = db['w_user_info2s'].find({'disease_id': record['_id']})
+        open_id_list = list()
+        disease_id_list = str()
         for r in res:
-            open_id_list.append(r[0])
+            open_id_list.append(r['open_id'])
+            if not disease_id_list:
+                disease_id_list = r['complications']
         # nickname: chmwang, append to each group
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
         print 'Open_id_list: ' + str(open_id_list)
         logging.info('Open_id_list: ' + str(open_id_list))
 
         # candidate disease list
-        disease_id_list = record[0]+res[0][1]
+        disease_id_list = record['_id']+disease_id_list
         # parse disease_id to type list & remove the last element
         disease_id_list = disease_id_list.split(',')
         disease_id_list.pop()
 
         # randomly decide which disease to recommend
-        disease_id = disease_id_list[random.randint(0, len(disease_id_list)-1)]
-        sql = 'SELECT name FROM disease_info WHERE disease_id=%s'
-        cursor_classify.execute(sql, disease_id)
-        disease_name = cursor_classify.fetchall()
-        print 'Disease_name: ' + disease_name[0][0]
-        logging.info('Disease_name: ' + disease_name[0][0])
+        disease_id = int(disease_id_list[random.randint(0, len(disease_id_list)-1)])
+        print disease_id
+
+        disease_info = db['w_disease_info2s'].find({'disease_id': disease_id})
+        print 'Disease_name: ' + disease_info[0]['name']
+        logging.info('Disease_name: ' + disease_info[0]['name'])
 
         # iterate until disease_info_column not null
         while True:
@@ -269,14 +245,12 @@ def send_article():
 
             # fetch such disease_info column with specific disease_id
             # return list of related results, for example, book results(id=1, 2, ..)
-            sql = 'SELECT '+RECOMMEND_ITEM[recommend_item_index]+' FROM disease_info WHERE disease_id=%s'
-            cursor_classify.execute(sql, disease_id)
-            r = cursor_classify.fetchall()
-            if len(r[0][0]) > 0:
+            r = db['w_disease_info2s'].find({'disease_id': disease_id})
+            if len(r[0][RECOMMEND_ITEM[recommend_item_index]]) > 0:
                 break
 
         # related result list
-        item_id_list = r[0][0].split(',')
+        item_id_list = r[0][RECOMMEND_ITEM[recommend_item_index]].split(',')
         item_id_list.pop()
         # choose only one in these results
         item_id = item_id_list[random.randint(0, len(item_id_list)-1)]
@@ -286,7 +260,8 @@ def send_article():
         logging.info('Item_id: ' + item_id)
 
         # get article_id
-        article_id = get_article_id(recommend_item_index, item_id, article_list)
+        article_id = get_article_id(recommend_item_index, int(item_id), article_list)
+        article_list.pop()
 
         send_msg_api = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s' % access_token
         data = {
