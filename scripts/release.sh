@@ -33,8 +33,7 @@ python ./classify/init.py
 DATABASE_FILTER=filter
 for table in ${ITEM}
 do
-		mysql --user=root --password=123456 ${DATABASE_FILTER} < ./filter_tables/${table}.sql
-		mysql --user=root --password=123456 ${DATABASE_FILTER} < ./filter_tables/${table}_cache.sql
+		mysql --user=root --password=123456 ${DATABASE_FILTER} < ./filter_tables/table_opt/${table}.sql
 done
 
 # execute ./build_database_classify/filter.py
