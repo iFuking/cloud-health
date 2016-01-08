@@ -33,7 +33,7 @@ def get_soup_by_url(url):
 
 def sync_db(app_id, name, star, down_num, web_url, img_url, apk_url, description):
     try:
-        sql = 'INSERT INTO apk(id, name, star, down_num, web_url, img_url, apk_url, description) ' \
+        sql = 'INSERT INTO apk(apk_id, name, star, down_num, web_url, img_url, apk_url, description) ' \
               'VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
         cursor.execute(sql, (app_id, name, star, down_num, web_url, img_url, apk_url, description))
         db.commit()
