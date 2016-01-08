@@ -35,7 +35,7 @@ def get_complications(disease_ids):
 
 
 def init_db_collection():
-    db['tw_user_info2s'].drop()
+    db['w_user_info2s'].drop()
     return
 
 
@@ -81,7 +81,7 @@ def classify_user():
         dct['open_id'] = open_id
         dct['disease_id'] = disease_ids
         dct['complications'] = complications
-        db['tw_user_info2s'].insert_one(dct)
+        db['w_user_info2s'].insert_one(dct)
     return
 
 

@@ -152,7 +152,7 @@ def get_article_id(item_index, item_id, article_list):
     res = db[collection_name].find({RECOMMEND_ITEM[item_index]+'_id': item_id})
     # fetch result as title
     title = res[0][TITLE[item_index]]
-    print 'Title: ' + title
+    print 'Title: ' + title.encode('utf8')
     logging.info('Title: ' + title)
 
     disease_json = dict()
@@ -189,18 +189,18 @@ def send_article():
     logging.info('Apk_id: ' + str(apk_id))
 
     results = db['w_apk2s'].find({'apk_id': apk_id})
-    title = '应用推荐： '.decode('utf8') + results[0]['name']
+    title = '应用推荐： ' + results[0]['name'].encode('utf8')
     print 'Title: ' + title
     logging.info('Title: ' + title)
 
     apk_json = dict()
-    apk_json['title'] = title.encode('utf8')
+    apk_json['title'] = title
 
     apk_json['source_url'] = results[0]['web_url'].encode('utf8')
     content = results[0]['description'].encode('utf8')
     apk_json['content'] = content.replace('\n', '<br>')
 
-    apk_json['digest'] = title.encode('utf8')
+    apk_json['digest'] = title
 
     apk_json['media_id'] = str(get_media_id('../image/apk_img/%d.jpg' % apk_id))
     article_list = list()
@@ -235,7 +235,7 @@ def send_article():
         print disease_id
 
         disease_info = db['w_disease_info2s'].find({'disease_id': disease_id})
-        print 'Disease_name: ' + disease_info[0]['name']
+        print 'Disease_name: ' + disease_info[0]['name'].encode('utf8')
         logging.info('Disease_name: ' + disease_info[0]['name'])
 
         # iterate until disease_info_column not null
