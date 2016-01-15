@@ -210,6 +210,8 @@ def send_article():
     # group users by disease_id
     results = db['w_user_info2s'].aggregate([{'$group': {'_id': '$disease_id'}}])
 
+    # group_id_start
+    group_id = 200
     for record in results:
         # for each group, generate open_id list
         res = db['w_user_info2s'].find({'disease_id': record['_id']})
@@ -219,6 +221,12 @@ def send_article():
             open_id_list.append(r['open_id'])
             if not disease_id_list:
                 disease_id_list = r['complications']
+
+        # move user to specific group
+        for open_id in open_id_list:
+            wechat_basic_ins.move_user(open_id, group_id)
+        group_id += 1
+
         # nickname: chmwang, append to each group
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
         print 'Open_id_list: ' + str(open_id_list)
