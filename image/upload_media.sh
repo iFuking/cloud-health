@@ -1,0 +1,1 @@
+curl -F media=@../image/disease.jpg "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=2vpBUkoIgPnPAFqIRsqp5lqZ35u-DC6Y7xoPRRnfvQjO_OWJ2EPCaMoZzBOSg086JC1fx6Z_73Ma6GZZxNLMdl7V00qoAcxmvJ-9042LqLAWYVjACAHJG&type=image"
