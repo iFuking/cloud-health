@@ -7,6 +7,7 @@ import json
 import logging
 import requests
 import random
+import subprocess
 
 
 # ignore ssl InsecurePlatform warning
@@ -99,7 +100,21 @@ TITLE = [
 # save valid media_id in file, update when expired
 def get_media_id(img_path):
     # WechatBasic python sdk
-    response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
+    # response = wechat_basic_ins.upload_media('image', open(img_path, 'r'))
+
+    # official upload image api instead of WechatBasic python sdk
+    upload_media_api = 'https://api.weixin.qq.com/cgi-bin/media/upload?access_token=%s&type=image' % access_token
+    # bash shell commend, write file
+    bash_cmd = 'curl -F media=@%s "%s"' % (img_path, upload_media_api)
+
+    upload_media_shell_path = '../image/upload_media.sh'
+    f = open(upload_media_shell_path, 'w')
+    f.write(bash_cmd)
+    f.close()
+
+    response = subprocess.Popen(upload_media_shell_path, shell=True, stdout=subprocess.PIPE).stdout.read()
+    response = json.loads(response)
+
     # response text, log for debug
     logging.info(response)
     print response
@@ -136,7 +151,7 @@ def get_article_resp(article_list):
         ]
     }
     # POST request, json format `str`
-    response = requests.post(article_id_api, json.dumps(data, ensure_ascii=False))
+    response = requests.post(article_id_api, json.dumps(data, ensure_ascii=False), verify=False)
 
     # response text, log for debug
     logging.info(response.text)
@@ -222,10 +237,10 @@ def send_article():
             if not disease_id_list:
                 disease_id_list = r['complications']
 
-        # move user to specific group
-        for open_id in open_id_list:
-            wechat_basic_ins.move_user(open_id, group_id)
-        group_id += 1
+        # # move user to specific group
+        # for open_id in open_id_list:
+        #     wechat_basic_ins.update_group(open_id, int(group_id))
+        # group_id += 1
 
         # nickname: chmwang, append to each group
         open_id_list.append('o8AvqvsA4EPC6HkAfIz-lQOJUl-0')
@@ -280,7 +295,7 @@ def send_article():
             'msgtype': 'mpnews'
         }
         # POST request, json format
-        response = requests.post(send_msg_api, json.dumps(data))
+        response = requests.post(send_msg_api, json.dumps(data), verify=False)
         # response text, log for debug
         logging.info(response.text)
         print response.text + '\n\n'
