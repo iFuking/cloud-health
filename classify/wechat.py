@@ -196,7 +196,7 @@ def get_article_id(item_index, item_id, article_list):
     return article_id
 
 
-def send_article():
+def get_apk_article():
     # generate apk recommend article
     apk_numbers = db['w_apk2s'].count() / 10
     apk_id = random.randint(1, apk_numbers)
@@ -224,9 +224,14 @@ def send_article():
     # generate disease recommend article
     # group users by disease_id
     results = db['w_user_info2s'].aggregate([{'$group': {'_id': '$disease_id'}}])
+    return article_list, results
 
-    # group_id_start
-    group_id = 200
+
+def send_article():
+    resp = get_apk_article()
+    article_list = resp[0]
+    results = resp[1]
+
     for record in results:
         # for each group, generate open_id list
         res = db['w_user_info2s'].find({'disease_id': record['_id']})
