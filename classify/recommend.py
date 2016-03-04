@@ -5,9 +5,6 @@ import json
 
 client = MongoClient()
 db = client.test
-
-user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-headers = {'User-Agent': user_agent}
 host = '172.18.9.7'
 
 
@@ -47,8 +44,8 @@ def classify_user():
         open_id = record['openId']
 
         # open api, fetch all reports using open_id
-        url = 'http://%s/api/history?openId=%s&diagnose=true' % (host, open_id)
-        request = urllib2.Request(url, headers=headers)
+        url = 'http://%s/api/reports?openId=%s&diagnose=true' % (host, open_id)
+        request = urllib2.Request(url)
         try:
             response = urllib2.urlopen(request, timeout=1)
             # response, json format content
@@ -61,13 +58,13 @@ def classify_user():
 
         dct = json.loads(content)
         bp = bmi = 'NORMAL'
-        if 'data' in dct:
-            for item in dct['data']:
+        if 'data' in dct and 'data' in dct['data']:
+            for item in dct['data']['data']:
                 if 'bp' in item['result'] and item['result']['bp']['result'] != 'NORMAL':
                     bp = item['result']['bp']['result']
                     break
 
-            for item in dct['data']:
+            for item in dct['data']['data']:
                 if 'BMI' in item['result'] and item['result']['BMI']['result'] != 'NORMAL':
                     bmi = item['result']['BMI']['result']
                     break
