@@ -2,6 +2,11 @@ from pymongo import MongoClient
 import urllib2
 import socket
 import json
+import logging
+
+
+# configure logging level
+logging.basicConfig(level=logging.INFO)
 
 client = MongoClient()
 db = client.test
@@ -33,6 +38,7 @@ def get_complications(disease_ids):
 
 def init_db_collection():
     db['w_user_info2s'].drop()
+    logging.info('Initial/Drop collection `w_user_info2s`.')
     return
 
 
@@ -53,6 +59,7 @@ def classify_user():
 
         # catch exception, not found host or connection timeout
         except (urllib2.URLError, socket.timeout) as e:
+            logging.error(e)
             print e
             continue
 
@@ -79,6 +86,7 @@ def classify_user():
         dct['disease_id'] = disease_ids
         dct['complications'] = complications
         db['w_user_info2s'].insert_one(dct)
+    logging.info('Finish classify user.')
     return
 
 
