@@ -11,14 +11,15 @@ db_classify = MySQLdb.connect(host='localhost', user='web', passwd='web', db='cl
 cur_classify = db_classify.cursor()
 db_classify.set_character_set('utf8')
 
-# disease list
 DISEASE_NAME = [
     '血压', '肥胖',
-    '中风', '心脏病', '血管瘤', '肾衰竭',
-    '糖尿病', '冠心病', '血脂',
-    '肠炎', '肺结核', '肿瘤',
-    '甲状腺'
+    '脊椎', '脏腑', '消化', '泌尿'
+    # '中风', '心脏病', '血管瘤', '肾衰竭',
+    # '糖尿病', '冠心病', '血脂',
+    # '肠炎', '肺结核', '肿瘤',
+    # '甲状腺'
 ]
+# disease list
 
 # database tables | disease_info table's column
 TABLE_NAME = [
