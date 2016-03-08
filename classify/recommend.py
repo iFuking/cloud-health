@@ -13,6 +13,7 @@ db = client.test
 host = '172.18.9.7'
 
 
+# disease grouped by diagnose
 def get_diseases(bp, bmi, jizhui, zangfu, xiaohua, miniao):
     disease_ids = ''
     if bp != 'NORMAL':
@@ -50,6 +51,7 @@ def init_db_collection():
     return
 
 
+# parse diagnose result, json object
 def diagnose(dct, bp, bmi, jizhui, zangfu, xiaohua, miniao):
     if 'data' in dct and 'data' in dct['data']:
         for item in dct['data']['data']:

@@ -44,6 +44,7 @@ def main():
         except MySQLdb.IntegrityError as e:
             continue
 
+    # classify disease related to different items (ask, book, etc.)
     for name in DISEASE_NAME:
         i = -1
         print 'Disease ' + name
