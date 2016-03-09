@@ -88,12 +88,12 @@ def diagnose(dct, bp, bmi, jizhui, zangfu, xiaohua, miniao):
 
 def classify_user():
 
-    # results = db['guests'].find()
-    results = ['o8AvqvqYPNJxXMSPOiXSEFjbxsVs']
+    results = db['guests'].find()
+    # results = ['o8AvqvqYPNJxXMSPOiXSEFjbxsVs']
     for record in results:
 
-        # open_id = record['openId']
-        open_id = 'o8AvqvqYPNJxXMSPOiXSEFjbxsVs'
+        open_id = record['openId']
+        # open_id = 'o8AvqvqYPNJxXMSPOiXSEFjbxsVs'
 
         # open api, fetch all reports using open_id
         url = 'http://%s/api/reports?openId=%s&diagnose=true' % (host, open_id)

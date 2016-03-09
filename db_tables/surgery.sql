@@ -1,7 +1,0 @@
-CREATE TABLE `surgery` (
-	`id` INT(11) UNSIGNED NOT NULL, 
-	`name` TEXT DEFAULT NULL, 
-	`department` TEXT DEFAULT NULL, 
-	`content` LONGTEXT DEFAULT NULL, 
-	PRIMARY KEY (`id`)
-) CHARACTER SET = `UTF8`;
