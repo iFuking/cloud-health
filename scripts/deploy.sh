@@ -13,4 +13,4 @@ ssh ${REMOTE_HOST} "sh ${REMOTE_DIR}script/bak_python.sh"
 
 cd ${WORKING_DIR}
 echo "upload files..."
-scp classify/wechat.py classify/filter.py classify/init.py classify/recommend.py classify/apk.py classify/classify.py ${REMOTE_HOST}:${REMOTE_DIR}python
+scp wechat_recommand/wechat.py wechat_recommand/filter.py wechat_recommand/init.py wechat_recommand/recommend.py wechat_recommand/apk.py wechat_recommand/classify.py wechat_recommand/wx_group.py ${REMOTE_HOST}:${REMOTE_DIR}python
