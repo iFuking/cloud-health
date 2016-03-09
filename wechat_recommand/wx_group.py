@@ -5,6 +5,7 @@ import json
 import urllib2
 import socket
 import logging
+import requests
 
 app_id = 'wx1071ef65b25ab039'
 app_secret = '235aaa4ed220afbf47af54939bebcff3'
@@ -91,40 +92,104 @@ access_token = get_access_token()
 #         print s
 #     return
 
-def wx_find_group(group_name):
-    response = wechat_basic_ins.get_groups()
-    for record in response['groups']:
+
+def get_groups():
+    get_groups_api = 'https://api.weixin.qq.com/cgi-bin/groups/get?access_token=%s' \
+                     % access_token
+    # GET request
+    request = urllib2.Request(get_groups_api)
+    try:
+        response = urllib2.urlopen(request, timeout=1)
+        content = response.read()
+
+    except (urllib2.URLError, socket.timeout) as e:
+        logging.error(e)
+        print e
+
+    dct = json.loads(content)
+    return dct
+
+def find_group(group_name, dct):
+
+    if 'groups' not in dct:
+        logging.info('Failed to get groups')
+
+    for record in dct['groups']:
         if record['name'] == group_name:
             logging.info('Find group %s, group_id=%d' % (group_name, record['id']))
             return True, record['id']
-    logging.info('No such group %s' % group_name)
+
     return False, -1
 
-def wx_create_group(group_name):
-    response = wechat_basic_ins.create_group(group_name)
-    logging.info(response)
+def create_group(group_name):
+    create_group_api = 'https://api.weixin.qq.com/cgi-bin/groups/create?access_token=%s' \
+                       % access_token
+    data = {
+        'group': {
+            'name': group_name
+        }
+    }
+    response = requests.post(create_group_api, json.dumps(data), verify=False)
+    dct = json.loads(response.text)
+
+    group_id = -1
+    if 'group' in dct:
+        group_id = dct['group']['id']
+    logging.info(response.text)
+    return group_id
+
+def move_user_to_group(open_id, group_id):
+    move_user_api = 'https://api.weixin.qq.com/cgi-bin/groups/members/update?access_token=%s' \
+                    % access_token
+    data = {
+        'openid': open_id,
+        'to_groupid': group_id
+    }
+    response = requests.post(move_user_api, json.dumps(data), verify=False)
+    logging.info(response.text)
     return
 
-def wx_move_user_to_group(open_id, group_id):
-    response = wechat_basic_ins.update_group(open_id, group_id)
-    logging.info(response)
-    return
+def update_groups(dct, group_id, group_name):
+    data = {
+        'id': group_id,
+        'name': group_name,
+        'count': 1
+    }
+
+    if 'groups' in dct:
+        dct['groups'].append(data)
+    return dct
 
 def wx_group():
     # fetch all records of collection `w_user_info2s`
     results = db['w_user_info2s'].find()
+
+    # get groups in dict
+    dct = get_groups()
+    if 'groups' not in dct:
+        logging.info('Failed to get groups')
+        return
+
     for record in results:
         # open_id and group name
         group_name = record['disease_id']
         open_id = record['open_id']
 
         # find if group name exists in wechat management platform
-        have_group, group_id = wx_find_group(group_name)
+        have_group, group_id = find_group(group_name)
         if have_group is False:
             # create such group if group name not exists
-            wx_create_group(group_name)
+            group_id = create_group(group_name)
+            if group_id == -1:
+                logging.info('Failed to create group, group_name=%s' % group_name)
+                continue
+
+            # update groups dict
+            dct = update_groups(dct, group_id, group_name)
+
         # move user to specific group, finish user classify
-        wx_move_user_to_group(open_id, group_id)
+        move_user_to_group(open_id, group_id)
+        logging.info('\n')
     return
 
 def main():
